@@ -1,0 +1,146 @@
+<!-- o seletor de arquivos do Windows: um só, usado pelo botão do topo e pelo da seção «Criar personagem» -->
+<input
+  #picker
+  id="upload-file"
+  type="file"
+  hidden
+  accept="image/png,image/jpeg,image/webp"
+  [attr.aria-label]="'personagens.upload.file' | t"
+  (change)="onFile($event)"
+/>
+
+<fab-page-header [title]="'nav.personagens' | t" [subtitle]="'personagens.lead' | t">
+  <button type="button" class="btn" (click)="pickFile()">
+    <fab-icon name="arrow-up" [size]="18" />
+    {{ 'personagens.import' | t }}
+  </button>
+  <a class="btn btn-primary" [routerLink]="[]" fragment="novo">
+    <fab-icon name="sparkles" [size]="18" />
+    {{ 'personagens.new' | t }}
+  </a>
+</fab-page-header>
+
+<fab-section headingId="biblioteca" [title]="('personagens.library.title' | t) + ' (' + items().length + ')'" [hint]="'personagens.library.hint' | t">
+  @if (items().length) {
+    <div class="mb-6 flex flex-wrap items-end gap-4">
+      <div class="w-full max-w-xs">
+        <fab-field type="search" [label]="'personagens.search' | t" [value]="search()" (valueChange)="search.set($event)" />
+      </div>
+      <fab-segmented [options]="filterOptions()" [label]="'personagens.filter' | t" [value]="styleFilter()" (valueChange)="setFilter($event)" />
+    </div>
+    @if (visible().length) {
+      <ul class="tile-grid m-0 list-none p-0">
+        @for (c of visible(); track c.id) {
+          <li>
+            <a
+              [routerLink]="['/personagens', c.id]"
+              class="group grid content-start gap-2 border-2 border-ink bg-panel p-2 text-ink no-underline hover:bg-wash"
+            >
+              <span class="checker grid aspect-square w-full place-items-center overflow-hidden">
+                @if (c.main_image_url) {
+                  <img [src]="c.main_image_url" [alt]="c.name" loading="lazy" class="size-full object-contain" />
+                } @else {
+                  <fab-icon name="users" [size]="40" />
+                }
+              </span>
+              <strong class="font-display text-[1.1875rem] font-semibold">{{ c.name }}</strong>
+              <span class="flex flex-wrap items-center justify-between gap-2">
+                <fab-badge [tone]="tone(c)">{{ 'personagens.status.' + status(c) | t }}</fab-badge>
+                <span class="font-mono text-meta font-bold">{{ c.style }}</span>
+              </span>
+            </a>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="font-text text-ink-soft">{{ 'personagens.none.match' | t }}</p>
+    }
+  } @else if (loaded()) {
+    <fab-empty [title]="'personagens.empty.title' | t" [text]="'personagens.empty.text' | t">
+      <a class="btn btn-primary" [routerLink]="[]" fragment="novo">{{ 'personagens.empty.cta' | t }}</a>
+    </fab-empty>
+  }
+</fab-section>
+
+<fab-section headingId="novo" [title]="'personagens.create.title' | t" [hint]="'personagens.create.hint' | t">
+  <div class="grid gap-6">
+    <fab-segmented [options]="modeOptions()" [label]="'personagens.create.title' | t" [value]="mode()" (valueChange)="setMode($event)" />
+
+    @if (mode() === 'describe') {
+      <fab-prompt-box type="personagem" (parsed)="onParsed($event)" />
+
+      <div id="ficha" class="grid gap-5 border-t-2 border-rule-soft pt-6">
+        <h3>{{ 'personagens.form.title' | t }}</h3>
+        <fab-character-form [(form)]="form" />
+        <div class="flex flex-wrap items-center gap-3">
+          <button type="button" class="btn btn-primary" (click)="create()" [disabled]="!canCreate()">
+            <fab-icon name="check" [size]="18" />
+            {{ 'personagens.create' | t }}
+          </button>
+          <span class="text-small text-ink-soft">{{ 'personagens.create.next' | t }}</span>
+        </div>
+      </div>
+    } @else {
+      <div class="grid max-w-xl gap-5">
+        <p class="font-text text-ink-soft">{{ 'personagens.upload.hint' | t }}</p>
+        <div class="field">
+          <span class="field-label" id="upload-file-label">{{ 'personagens.upload.file' | t }}</span>
+          <div class="flex flex-wrap items-center gap-3">
+            <button type="button" class="btn" (click)="pickFile()" aria-describedby="upload-file-label">
+              <fab-icon name="arrow-up" [size]="18" />
+              {{ 'personagens.upload.choose' | t }}
+            </button>
+            <span class="text-small text-ink-soft" role="status">
+              {{ file() ? ('personagens.upload.chosen' | t: { name: file()!.name }) : ('personagens.upload.none' | t) }}
+            </span>
+          </div>
+        </div>
+        <fab-field [label]="'personagens.f.name' | t" [required]="true" [maxlength]="80" [(value)]="uploadName" />
+        <div class="field">
+          <span class="field-label">{{ 'personagens.f.style' | t }}</span>
+          <fab-segmented [options]="styleOptions" [label]="'personagens.f.style' | t" [value]="uploadStyle()" (valueChange)="setUploadStyle($event)" />
+        </div>
+        <label class="flex items-start gap-3 font-normal">
+          <input type="checkbox" [checked]="uploadRights()" (change)="onRights($event)" />
+          <span>{{ 'personagens.upload.rights' | t }}</span>
+        </label>
+        <div>
+          <button type="button" class="btn btn-primary" (click)="upload()" [disabled]="!canUpload()">
+            <fab-icon name="check" [size]="18" />
+            {{ 'personagens.upload.send' | t }}
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (error(); as message) {
+      <p class="banner banner-error" role="alert">
+        {{ message }}
+        @if (existing(); as id) {
+          <a [routerLink]="['/personagens', id]">{{ 'personagens.open.existing' | t }}</a>
+        }
+      </p>
+    }
+  </div>
+</fab-section>
+
+<fab-section headingId="pacote" [title]="'personagens.package.title' | t" [hint]="'personagens.package.hint' | t">
+  <div class="grid gap-8">
+    @if (items().length) {
+      <div class="grid gap-3">
+        <h3>{{ 'personagens.package.export' | t }}</h3>
+        <p class="max-w-measure font-text text-small text-ink-soft">{{ 'personagens.package.export.hint' | t }}</p>
+        <div>
+          <a class="btn" [href]="exportUrl" download>
+            <fab-icon name="arrow-down" [size]="18" />
+            {{ 'personagens.package.download' | t }}
+          </a>
+        </div>
+      </div>
+    }
+    <div class="grid gap-3">
+      <h3>{{ 'personagens.package.import' | t }}</h3>
+      <fab-package-import (imported)="load()" />
+    </div>
+  </div>
+</fab-section>

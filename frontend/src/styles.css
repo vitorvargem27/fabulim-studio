@@ -1,0 +1,6 @@
+/* Ponto de entrada dos estilos: Tailwind v4 com tema exclusivo do Fabulim (veja styles/theme.css). */
+@import 'tailwindcss';
+@import './styles/tokens.css';
+@import './styles/theme.css';
+@import './styles/base.css';
+@import './styles/components.css';

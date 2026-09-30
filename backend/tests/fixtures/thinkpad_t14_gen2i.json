@@ -1,0 +1,181 @@
+{
+    "schema_version":  1,
+    "collected_at":  "2026-09-29T00:04:31-03:00",
+    "full_collected_at":  "2026-09-29T00:02:15-03:00",
+    "mode":  "light",
+    "os":  {
+               "family":  "windows",
+               "name":  "Microsoft Windows 11 Pro",
+               "version":  "10.0.26200",
+               "build":  26200,
+               "arch":  "x64"
+           },
+    "system":  {
+                   "vendor":  "LENOVO",
+                   "model":  "20W1SGSV00",
+                   "marketing_name":  "ThinkPad T14 Gen 2i",
+                   "is_laptop":  true,
+                   "battery":  {
+                                   "present":  true,
+                                   "percent":  100,
+                                   "on_ac":  true
+                               },
+                   "power_plan":  "Equilibrado",
+                   "power_plan_guid":  "381b4222-f694-41f0-9685-ff5bb260df2e"
+               },
+    "cpu":  {
+                "model":  "11th Gen Intel(R) Core(TM) i7-1185G7 @ 3.00GHz",
+                "cores":  4,
+                "threads":  8,
+                "max_mhz":  2995,
+                "features":  {
+                                 "avx":  true,
+                                 "avx2":  true,
+                                 "avx512":  true,
+                                 "sse42":  true,
+                                 "neon":  false
+                             },
+                "npu":  {
+                            "present":  false,
+                            "name":  null
+                        }
+            },
+    "memory":  {
+                   "ram_total_mb":  32475,
+                   "ram_free_mb":  10752
+               },
+    "disk":  {
+                 "path":  "C:\\video_create_ai",
+                 "drive":  "C:",
+                 "total_mb":  486304,
+                 "free_mb":  62718,
+                 "kind":  "SSD (NVMe)"
+             },
+    "gpus":  [
+                 {
+                     "vendor":  "intel",
+                     "name":  "Intel(R) Iris(R) Xe Graphics",
+                     "kind":  "integrated",
+                     "dedicated_mb":  128,
+                     "shared_mb":  16237,
+                     "driver":  "32.0.101.7085",
+                     "driver_date":  "2026-03-02",
+                     "driver_model":  "WDDM 3.2",
+                     "d3d12_ml":  true,
+                     "pci_id":  "VEN_8086\u0026DEV_9A49",
+                     "gfx_arch":  null,
+                     "gfx_arch_source":  null
+                 }
+             ],
+    "acceleration":  {
+                         "cuda":  {
+                                      "available":  false,
+                                      "detail":  null,
+                                      "version":  null
+                                  },
+                         "rocm":  {
+                                      "available":  false,
+                                      "detail":  null,
+                                      "version":  null
+                                  },
+                         "directml":  {
+                                          "available":  true,
+                                          "detail":  "DirectML.dll presente; adaptador com D3D12 ML",
+                                          "version":  null
+                                      },
+                         "vulkan":  {
+                                        "available":  true,
+                                        "api_version":  "1.4.313",
+                                        "devices":  [
+                                                        {
+                                                            "name":  "Intel(R) Iris(R) Xe Graphics",
+                                                            "type":  "integrated_gpu"
+                                                        }
+                                                    ]
+                                    },
+                         "metal":  {
+                                       "available":  false,
+                                       "detail":  null,
+                                       "version":  null
+                                   },
+                         "openvino":  {
+                                          "available":  false,
+                                          "candidate":  true,
+                                          "version":  null
+                                      }
+                     },
+    "tools":  {
+                  "python":  {
+                                 "installed":  true,
+                                 "version":  "3.14.3",
+                                 "path":  "C:\\Users\\<usuario>\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+                                 "versions_available":  [
+                                                            "3.14",
+                                                            "3.12"
+                                                        ]
+                             },
+                  "node":  {
+                               "installed":  true,
+                               "version":  "22.18.0",
+                               "path":  "C:\\Program Files\\nodejs\\node.exe"
+                           },
+                  "npm":  {
+                              "installed":  true,
+                              "version":  "11.12.0",
+                              "path":  "C:\\Program Files\\nodejs\\npm.cmd"
+                          },
+                  "git":  {
+                              "installed":  true,
+                              "version":  "2.46.0",
+                              "path":  "C:\\Program Files\\Git\\cmd\\git.exe"
+                          },
+                  "ffmpeg":  {
+                                 "installed":  false,
+                                 "version":  null,
+                                 "path":  null,
+                                 "encoders":  [
+
+                                              ]
+                             },
+                  "ollama":  {
+                                 "installed":  true,
+                                 "version":  "0.33.3",
+                                 "path":  "C:\\Users\\<usuario>\\AppData\\Local\\Programs\\Ollama\\ollama.exe",
+                                 "server_active":  true,
+                                 "host":  "127.0.0.1:11434",
+                                 "models":  [
+                                                {
+                                                    "name":  "qwen3:4b",
+                                                    "size_mb":  2382
+                                                }
+                                            ],
+                                 "loaded":  [
+
+                                            ],
+                                 "gpu_discovery":  [
+                                                       {
+                                                           "library":  "Vulkan",
+                                                           "name":  "Intel(R) Iris(R) Xe Graphics",
+                                                           "dropped_integrated":  true
+                                                       },
+                                                       {
+                                                           "library":  "cpu",
+                                                           "name":  "cpu",
+                                                           "dropped_integrated":  false
+                                                       }
+                                                   ],
+                                 "igpu_dropped":  true
+                             },
+                  "claude_code":  {
+                                      "installed":  true,
+                                      "version":  "2.1.284",
+                                      "path":  "C:\\Users\\<usuario>\\AppData\\Roaming\\Claude\\claude-code\\2.1.284\\claude.exe",
+                                      "source":  "app",
+                                      "logged_in":  true,
+                                      "auth_method":  "claude.ai",
+                                      "subscription":  "pro"
+                                  }
+              },
+    "fingerprint":  "b0e108ccc872913d",
+    "changed_since_last_run":  false
+}

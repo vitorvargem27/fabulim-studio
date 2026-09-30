@@ -1,0 +1,50 @@
+<div class="mb-6 flex flex-wrap items-end gap-x-6 gap-y-4 border-b border-rule-soft pb-6">
+  <div class="grid gap-1">
+    <label for="f-servico" class="text-small">{{ 'logs.service' | t }}</label>
+    <select id="f-servico" [value]="selectedService()" (change)="pick('service', $event)">
+      <option value="">{{ 'logs.all' | t }}</option>
+      @for (name of serviceOptions(); track name) {
+        <option [value]="name" [selected]="name === selectedService()">{{ name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="grid gap-1">
+    <label for="f-nivel" class="text-small">{{ 'logs.level' | t }}</label>
+    <select id="f-nivel" [value]="level()" (change)="pick('level', $event)">
+      <option value="">{{ 'logs.all' | t }}</option>
+      <option value="INFO" [selected]="level() === 'INFO'">INFO+</option>
+      <option value="WARNING" [selected]="level() === 'WARNING'">WARNING+</option>
+      <option value="ERROR" [selected]="level() === 'ERROR'">ERROR</option>
+    </select>
+  </div>
+
+  <label class="auto inline-flex min-h-11 items-center gap-2"><input type="checkbox" [checked]="auto()" (change)="toggleAuto($event)" /> {{ 'logs.auto' | t }}</label>
+  <button type="button" class="btn btn-sm" (click)="load()" [disabled]="loading()">
+    <fab-icon name="refresh" [size]="16" />
+    {{ 'common.refresh' | t }}
+  </button>
+</div>
+
+@if (failed()) {
+  <div class="banner banner-error mb-5" role="alert">
+    <fab-icon name="x-circle" />
+    <p class="text-small">{{ 'servicos.error.text' | t }}</p>
+  </div>
+}
+
+@if (entries().length) {
+  <!-- a lista rola sozinha (max-height): tabindex deixa o teclado rolar com as setas (WCAG 2.1.1) -->
+  <ol class="log-list m-0 max-h-[60vh] list-none overflow-auto border-2 border-ink bg-panel p-0" tabindex="0" [attr.aria-label]="'status.tab.logs' | t">
+    @for (entry of entries(); track $index) {
+      <li class="grid items-baseline gap-x-4 gap-y-1 border-b border-rule-soft px-4 py-2.5 text-small last:border-b-0 grid-cols-[max-content_max-content_1fr] md:grid-cols-[max-content_max-content_max-content_1fr]">
+        <span class="ts mono text-ink-soft">{{ time(entry.ts) }}</span>
+        <fab-badge [tone]="tone(entry.level)">{{ entry.level }}</fab-badge>
+        <code class="svc">{{ entry.service }}</code>
+        <span class="msg mono col-span-full whitespace-pre-wrap md:col-span-1">{{ entry.msg }}</span>
+      </li>
+    }
+  </ol>
+} @else if (!loading() && !failed()) {
+  <fab-empty [title]="'logs.empty.title' | t" [text]="'logs.empty.text' | t" />
+}

@@ -1,0 +1,129 @@
+<fab-page-header [title]="'nav.fila' | t" [subtitle]="'fila.lead' | t">
+  <fab-badge [tone]="jobs.connected() ? 'ok' : 'warning'">{{ (jobs.connected() ? 'fila.live' : 'fila.reconnecting') | t }}</fab-badge>
+  <button type="button" class="btn btn-sm" (click)="demo()">
+    <fab-icon name="bolt" [size]="16" />
+    {{ 'fila.demo' | t }}
+  </button>
+  <button type="button" class="btn btn-quiet btn-sm" (click)="jobs.clearFinished()" [disabled]="!jobs.finished().length">
+    <fab-icon name="trash" [size]="16" />
+    {{ 'fila.clear' | t }}
+  </button>
+</fab-page-header>
+
+<!-- Uma linha de job. Usada nas três listas (agora, próximos, concluídos). -->
+<ng-template #row let-job let-reorder="reorder" let-index="index" let-total="total">
+  <div class="grid items-center gap-x-6 gap-y-3 md:grid-cols-[minmax(0,1fr)_auto] xl:grid-cols-[minmax(0,1.5fr)_auto_minmax(9rem,1fr)_auto]">
+    <div class="job-main flex min-w-0 items-center gap-3">
+      @if (reorder) {
+        <span class="handle inline-grid h-11 w-8 flex-none cursor-grab touch-none place-items-center text-ink-soft" cdkDragHandle aria-hidden="true" [attr.title]="'fila.drag' | t">
+          <fab-icon name="grip" />
+        </span>
+      }
+      <div class="titles grid min-w-0">
+        <strong class="font-display text-[1.1875rem] font-semibold">{{ job.title }}</strong>
+        <span class="text-small text-ink-soft">{{ kind(job) }} · {{ time(job.created_at) }}</span>
+        @if (job.message && job.status !== 'queued') {
+          <span class="text-small">{{ job.message }}</span>
+        }
+        @if (job.error) {
+          <span class="err text-small font-semibold text-bad-ink">{{ job.error }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="job-state flex items-center gap-2">
+      <fab-badge [tone]="tone(job)">{{ 'job.status.' + job.status | t }}</fab-badge>
+      @if (job.attempts > 1) {
+        <span class="text-small text-ink-soft">{{ 'fila.attempt' | t: { n: job.attempts } }}</span>
+      }
+    </div>
+
+    <div class="job-progress grid gap-1 empty:hidden max-md:order-3 md:col-span-2 xl:col-span-1">
+      @if (job.status === 'running' || job.status === 'paused') {
+        <fab-progress [value]="job.progress" [label]="job.title" [paused]="job.status === 'paused'" />
+        <span class="text-small text-ink-soft">
+          {{ percent(job.progress) }}
+          @if (job.eta_seconds && job.status === 'running') {
+            · {{ 'fila.eta' | t: { time: duration(job.eta_seconds) } }}
+          }
+        </span>
+      }
+    </div>
+
+    <div class="job-actions flex flex-wrap gap-2 max-md:order-4 md:col-span-2 xl:col-span-1 xl:justify-end">
+      @if (reorder) {
+        <button type="button" class="btn btn-icon btn-sm btn-quiet" (click)="move(job, -1)" [disabled]="index === 0" [attr.aria-label]="'fila.up' | t: { title: job.title }">
+          <fab-icon name="arrow-up" [size]="16" />
+        </button>
+        <button type="button" class="btn btn-icon btn-sm btn-quiet" (click)="move(job, 1)" [disabled]="index === total - 1" [attr.aria-label]="'fila.down' | t: { title: job.title }">
+          <fab-icon name="arrow-down" [size]="16" />
+        </button>
+      }
+      @if (canPause(job)) {
+        <button type="button" class="btn btn-sm" (click)="act(job, 'pause')" [attr.aria-label]="'fila.pause' | t: { title: job.title }">
+          <fab-icon name="pause" [size]="16" />
+          {{ 'fila.pause.short' | t }}
+        </button>
+      }
+      @if (canResume(job)) {
+        <button type="button" class="btn btn-sm" (click)="act(job, 'resume')" [attr.aria-label]="'fila.resume' | t: { title: job.title }">
+          <fab-icon name="play" [size]="16" />
+          {{ 'fila.resume.short' | t }}
+        </button>
+      }
+      @if (job.status === 'queued' || job.status === 'running' || job.status === 'paused') {
+        <button type="button" class="btn btn-sm btn-danger" (click)="act(job, 'cancel')" [disabled]="job.cancel_requested" [attr.aria-label]="'fila.cancel' | t: { title: job.title }">
+          <fab-icon name="stop" [size]="16" />
+          {{ 'fila.cancel.short' | t }}
+        </button>
+      }
+    </div>
+  </div>
+</ng-template>
+
+<fab-night-queue />
+
+@if (!hasAny() && jobs.loaded()) {
+  <fab-empty [title]="'fila.empty.title' | t" [text]="'fila.empty.text' | t">
+    <button type="button" class="btn btn-primary" (click)="demo()">
+      <fab-icon name="bolt" [size]="16" />
+      {{ 'fila.demo' | t }}
+    </button>
+  </fab-empty>
+} @else {
+  <fab-section headingId="agora" [title]="'fila.now' | t" [hint]="'fila.now.hint' | t">
+    @if (current(); as job) {
+      <article class="job current border-2 border-ink bg-wash p-5 shadow-hard">
+        <ng-container [ngTemplateOutlet]="row" [ngTemplateOutletContext]="{ $implicit: job, reorder: false, index: 0, total: 1 }" />
+      </article>
+    } @else {
+      <p class="font-text text-ink-soft">{{ 'fila.idle' | t }}</p>
+    }
+  </fab-section>
+
+  <fab-section headingId="proximos" [title]="('fila.next' | t) + ' (' + queued().length + ')'" [hint]="'fila.next.hint' | t">
+    @if (queued().length) {
+      <div class="list grid gap-3" cdkDropList (cdkDropListDropped)="drop($event)" [attr.aria-label]="'fila.next' | t">
+        @for (job of queued(); track job.id; let i = $index) {
+          <article class="job border-2 border-ink bg-panel p-4" cdkDrag>
+            <ng-container [ngTemplateOutlet]="row" [ngTemplateOutletContext]="{ $implicit: job, reorder: true, index: i, total: queued().length }" />
+          </article>
+        }
+      </div>
+    } @else {
+      <p class="font-text text-ink-soft">{{ 'fila.next.empty' | t }}</p>
+    }
+  </fab-section>
+
+  @if (jobs.finished().length) {
+    <fab-section headingId="concluidos" [title]="('fila.done' | t) + ' (' + jobs.finished().length + ')'" [hint]="'fila.done.hint' | t">
+      <div class="list grid gap-0">
+        @for (job of jobs.finished(); track job.id) {
+          <article class="job finished border-t border-rule-soft py-4 first:border-t-0 first:pt-0">
+            <ng-container [ngTemplateOutlet]="row" [ngTemplateOutletContext]="{ $implicit: job, reorder: false, index: 0, total: 1 }" />
+          </article>
+        }
+      </div>
+    </fab-section>
+  }
+}

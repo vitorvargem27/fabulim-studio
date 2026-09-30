@@ -1,0 +1,52 @@
+{
+  "name": "frontend",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "prestart": "node scripts/copiar-marca.mjs",
+    "start": "ng serve",
+    "prebuild": "node scripts/copiar-marca.mjs",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "lint": "eslint \"src/**/*.{ts,html}\"",
+    "e2e": "npm run build && node e2e/preparar.mjs && playwright test"
+  },
+  "private": true,
+  "packageManager": "npm@11.12.0",
+  "dependencies": {
+    "@angular/aria": "~21.2.0",
+    "@angular/cdk": "^21.2.14",
+    "@angular/common": "^21.2.0",
+    "@angular/compiler": "^21.2.0",
+    "@angular/core": "^21.2.0",
+    "@angular/forms": "^21.2.0",
+    "@angular/platform-browser": "^21.2.0",
+    "@angular/router": "^21.2.0",
+    "@fontsource-variable/fraunces": "^5.3.0",
+    "@fontsource-variable/fredoka": "^5.3.0",
+    "@fontsource-variable/nunito-sans": "^5.3.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.2.3",
+    "@angular/cli": "^21.2.3",
+    "@angular/compiler-cli": "^21.2.0",
+    "@axe-core/playwright": "^4.13.0",
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.20.4",
+    "@vitest/coverage-v8": "^4.1.11",
+    "angular-eslint": "^21.4.0",
+    "eslint": "^9.39.5",
+    "jsdom": "^28.0.0",
+    "postcss": "^8.5.28",
+    "prettier": "^3.8.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~5.9.2",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^4.0.8"
+  }
+}

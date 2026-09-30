@@ -1,0 +1,97 @@
+@if (store.missing()) {
+  <fab-page-header [title]="'proj.missing.title' | t" />
+  <fab-empty [title]="'proj.missing.title' | t" [text]="'proj.missing.text' | t">
+    <a class="btn btn-primary" routerLink="/projetos">{{ 'proj.back' | t }}</a>
+  </fab-empty>
+} @else if (project(); as p) {
+  <fab-page-header [title]="p.title" [subtitle]="'proj.workspace.lead' | t">
+    <a class="btn btn-sm" routerLink="/projetos">{{ 'proj.back' | t }}</a>
+    <button type="button" class="btn btn-sm" (click)="night()" [attr.title]="'proj.night.hint' | t">
+      <fab-icon name="clock" [size]="16" />
+      {{ 'proj.night' | t }}
+    </button>
+    <button type="button" class="btn btn-sm btn-danger" (click)="remove()">
+      <fab-icon name="trash" [size]="16" />
+      {{ 'proj.remove' | t }}
+    </button>
+  </fab-page-header>
+
+  <p class="mb-6 flex flex-wrap items-center gap-x-6 gap-y-1 text-small">
+    <span class="font-mono font-bold">{{ p.style }}</span>
+    <span>{{ 'proj.format.' + p.format | t }} · {{ p.target_duration_s }} s</span>
+    <span>{{ p.language === 'en' ? 'English' : 'Português (Brasil)' }}</span>
+    <span>{{ 'proj.scenes' | t: { n: store.scenes().length } }}</span>
+    @if (p.origin_id) {
+      <a [routerLink]="['/projetos', p.origin_id]">{{ 'proj.origin' | t }}</a>
+    }
+  </p>
+
+  <nav [attr.aria-label]="'proj.stages' | t">
+    <div class="stage-bar" role="group">
+      @for (stage of store.stages(); track stage.id; let i = $index) {
+        <button
+          type="button"
+          [attr.aria-current]="shown() === stage.id ? 'step' : null"
+          [disabled]="!stage.available"
+          (click)="select(stage)"
+        >
+          <span class="flex items-center gap-2 font-mono text-meta font-bold">
+            {{ i + 1 }}
+            @switch (stateOf(stage)) {
+              @case ('approved') {
+                <span>✓ {{ 'proj.state.approved' | t }}</span>
+              }
+              @case ('current') {
+                <span>● {{ 'proj.state.current' | t }}</span>
+              }
+              @case ('locked') {
+                <span>{{ 'proj.state.locked' | t }}</span>
+              }
+            }
+          </span>
+          <span class="font-display text-[1.0625rem] font-semibold leading-tight">{{ 'proj.stage.' + stage.id | t }}</span>
+          @if (stage.scenes_total) {
+            <span class="text-meta">{{ 'proj.scenes.approved' | t: { done: stage.scenes_approved ?? 0, total: stage.scenes_total } }}</span>
+          }
+        </button>
+      }
+    </div>
+  </nav>
+
+  @if (store.error(); as message) {
+    <p class="banner banner-error mt-6" role="alert">{{ message }}</p>
+  }
+  @if (store.activeJobs().length) {
+    <div class="mt-6 grid gap-3" aria-live="polite">
+      @for (job of store.activeJobs(); track job.id) {
+        <fab-job-progress [jobId]="job.id" />
+      }
+    </div>
+  }
+
+  <div class="mt-8">
+    @switch (shown()) {
+      @case ('enredo') {
+        <fab-etapa-enredo />
+      }
+      @case ('roteiro') {
+        <fab-etapa-roteiro />
+      }
+      @case ('storyboard') {
+        <fab-etapa-storyboard />
+      }
+      @case ('animacao') {
+        <fab-etapa-animacao />
+      }
+      @case ('audio') {
+        <fab-etapa-audio />
+      }
+      @case ('montagem') {
+        <fab-etapa-montagem />
+      }
+      @case ('revisao') {
+        <fab-etapa-revisao />
+      }
+    }
+  </div>
+}

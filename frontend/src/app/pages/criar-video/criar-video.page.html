@@ -1,0 +1,162 @@
+<fab-page-header [title]="'criar.title' | t" [subtitle]="'criar.lead' | t">
+  <a class="btn btn-sm" routerLink="/clipes" fragment="rapido">
+    <fab-icon name="film" [size]="16" />
+    {{ 'criar.quick' | t }}
+  </a>
+</fab-page-header>
+
+<fab-section headingId="comecar" [title]="'criar.start.title' | t" [hint]="'criar.start.hint' | t">
+  <fab-prompt-box type="enredo" (parsed)="onParsed($event)" />
+</fab-section>
+
+<fab-section headingId="historia" [title]="'criar.story.title' | t" [hint]="'criar.story.hint' | t">
+  <div class="grid gap-5">
+    <div class="field-row">
+      <fab-field [label]="'criar.f.title' | t" [maxlength]="160" [value]="form().title" (valueChange)="patch('title', $event)" />
+      <div class="field">
+        <span class="field-label">{{ 'criar.f.format' | t }}</span>
+        <fab-segmented [options]="formatOptions()" [label]="'criar.f.format' | t" [value]="form().format" (valueChange)="setFormat($event)" />
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label" for="story-seconds">{{ 'criar.f.duration' | t }}: {{ seconds() }} s</label>
+        <input id="story-seconds" type="range" min="15" [max]="limit()" step="5" [value]="seconds()" (input)="onSeconds($event)" />
+        <span class="field-hint">{{ 'criar.f.duration.hint' | t: { max: limit() } }}</span>
+      </div>
+      <div class="field">
+        <label class="field-label" for="story-language">{{ 'criar.f.language' | t }}</label>
+        <select id="story-language" (change)="onLanguage($event)">
+          <option value="pt-BR" [selected]="form().language === 'pt-BR'">Português (Brasil)</option>
+          <option value="en" [selected]="form().language === 'en'">English</option>
+        </select>
+      </div>
+      <div class="field">
+        <span class="field-label">{{ 'criar.f.style' | t }}</span>
+        <fab-segmented [options]="styleOptions" [label]="'criar.f.style' | t" [value]="form().style" (valueChange)="patch('style', $any($event))" />
+      </div>
+    </div>
+
+    <fab-character-picker
+      [characters]="library()"
+      [(selected)]="selectedIds"
+      [max]="8"
+      [requireCutout]="true"
+      [label]="'criar.f.characters' | t"
+      [hint]="'criar.f.characters.hint' | t"
+    />
+    @if (missingNames().length) {
+      <div class="banner" role="status">
+        <div class="grid gap-1">
+          <span>{{ 'criar.missing' | t: { names: missingNames().join(', ') } }}</span>
+          <span class="flex flex-wrap gap-3">
+            @for (name of missingNames(); track name) {
+              <a [routerLink]="['/personagens']" [queryParams]="{ nome: name }" fragment="novo">{{ 'criar.missing.create' | t: { name } }}</a>
+            }
+          </span>
+        </div>
+      </div>
+    }
+    @for (c of styleMismatch(); track c.id) {
+      <p class="banner" role="status">
+        {{ 'criar.mismatch' | t: { name: c.name, from: c.style, to: form().style } }}
+        <a [routerLink]="['/personagens', c.id]">{{ 'criar.mismatch.link' | t }}</a>
+      </p>
+    }
+    @for (c of withoutCutout(); track c.id) {
+      <p class="banner" role="status">
+        {{ 'criar.nocutout' | t: { name: c.name } }}
+        <a [routerLink]="['/personagens', c.id]">{{ 'criar.nocutout.link' | t }}</a>
+      </p>
+    }
+
+    <div class="field-row">
+      <fab-field [label]="'criar.f.theme' | t" [maxlength]="400" [value]="form().theme" (valueChange)="patch('theme', $event)" />
+      <fab-field [label]="'criar.f.settings' | t" [hint]="'criar.f.settings.hint' | t" [maxlength]="600" [value]="form().settings" (valueChange)="patch('settings', $event)" />
+    </div>
+    <fab-field
+      [label]="'criar.f.story' | t"
+      [hint]="'criar.f.story.hint' | t"
+      [multiline]="true"
+      [rows]="9"
+      [required]="true"
+      [maxlength]="12000"
+      [value]="form().story"
+      (valueChange)="patch('story', $event)"
+    />
+    <div class="field-row">
+      <fab-field [label]="'criar.f.music' | t" [maxlength]="400" [value]="form().music" (valueChange)="patch('music', $event)" />
+      <fab-field [label]="'criar.f.notes' | t" [maxlength]="1500" [value]="form().notes" (valueChange)="patch('notes', $event)" />
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+      <button type="button" class="btn btn-primary" (click)="create()" [disabled]="!canCreate()">
+        <fab-icon name="check" [size]="18" />
+        {{ 'criar.create' | t }}
+      </button>
+      <span class="text-small text-ink-soft">{{ 'criar.create.next' | t }}</span>
+    </div>
+    @if (error(); as message) {
+      <p class="banner banner-error" role="alert">{{ message }}</p>
+    }
+  </div>
+</fab-section>
+
+<fab-section headingId="fluxo" [title]="'criar.flow.title' | t" [hint]="'criar.flow.hint' | t">
+  <ol class="flow m-0 list-none p-0">
+    @for (step of steps; track step.key; let i = $index) {
+      <li class="border-t border-rule-soft first:border-t-0">
+        <a
+          [routerLink]="step.path"
+          [fragment]="step.fragment"
+          class="step group grid grid-cols-[3.75rem_minmax(0,1fr)] items-center gap-x-4 gap-y-1 px-3 py-5 text-ink no-underline hover:bg-accent hover:text-on-accent md:grid-cols-[6rem_minmax(0,1fr)_auto] md:gap-x-6"
+        >
+          <span
+            class="num font-display text-numeral font-semibold text-transparent [-webkit-text-stroke:2px_var(--ink)] group-hover:[-webkit-text-stroke-color:var(--on-accent)] md:row-span-1"
+            aria-hidden="true"
+            >{{ i + 1 }}</span
+          >
+          <span class="min-w-0">
+            <span class="step-name block font-display text-h3 font-semibold">{{ step.key | t }}</span>
+            <span class="mt-1 block max-w-measure font-text text-small text-ink-soft group-hover:text-on-accent">{{ step.key + '.text' | t }}</span>
+          </span>
+          <span class="col-start-2 mt-2 inline-flex items-center gap-2 font-ui text-small font-bold md:col-start-3 md:mt-0">
+            {{ step.key + '.go' | t }}
+            <fab-icon name="chevron-right" [size]="18" />
+          </span>
+        </a>
+      </li>
+    }
+  </ol>
+</fab-section>
+
+<fab-section headingId="aqui" [title]="'criar.here.title' | t" [hint]="'criar.here.hint' | t">
+  @if (profile(); as p) {
+    <p class="mb-5 font-ui text-small font-bold">
+      <a routerLink="/status/maquina">{{ 'topbar.profile' | t: { letter: p.letter } }} · {{ p.name }}</a>
+    </p>
+  }
+  @if (highlights().length) {
+    <ul class="caps rule-list">
+      @for (cap of highlights(); track cap.id) {
+        <li class="grid gap-x-8 gap-y-1 md:grid-cols-[minmax(0,1fr)_auto]">
+          <div class="min-w-0">
+            <strong class="font-display text-[1.1875rem] font-semibold">{{ cap.name }}</strong>
+            <p class="mt-1 font-text text-small text-ink-soft">
+              {{ cap.reason }}
+              @if (cap.eta) {
+                · {{ cap.eta }} ({{ (cap.eta_measured ? 'maquina.caps.measured' : 'maquina.caps.estimated') | t }})
+              }
+            </p>
+          </div>
+          <fab-badge [tone]="tone(cap)">{{ 'cap.state.' + cap.state | t }}</fab-badge>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="font-text text-ink-soft">{{ 'feature.here.empty' | t }}</p>
+  }
+  <p class="mt-6">
+    <a class="btn btn-sm" routerLink="/status/maquina">{{ 'feature.see.machine' | t }}</a>
+  </p>
+</fab-section>

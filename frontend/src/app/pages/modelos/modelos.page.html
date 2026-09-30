@@ -1,0 +1,56 @@
+<fab-page-header [title]="'nav.modelos' | t" [subtitle]="'modelos.lead' | t">
+  <button type="button" class="btn btn-primary" (click)="installAll()" [disabled]="!missing().length">
+    <fab-icon name="bolt" [size]="16" />
+    {{ 'modelos.install.all' | t }}
+  </button>
+</fab-page-header>
+
+<p class="-mt-4 mb-10 max-w-measure font-text text-small text-ink-soft">{{ 'modelos.note' | t }}</p>
+
+@if (failed()) {
+  <div class="banner banner-error" role="alert">
+    <fab-icon name="x-circle" />
+    <p class="text-small">{{ 'modelos.error' | t }}</p>
+  </div>
+}
+
+@for (group of groups(); track group.id) {
+  <div [id]="group.id" class="scroll-mt-16">
+    <fab-section [headingId]="'grupo-' + group.id" [title]="('modelos.group.' + group.id) | t" [hint]="('modelos.group.' + group.id + '.hint') | t">
+      @for (item of group.items; track item.id) {
+        <article
+          class="tool grid gap-x-8 gap-y-3 border-t border-rule-soft py-5 first:border-t-0 first:pt-0 md:grid-cols-[minmax(0,1fr)_auto]"
+          [attr.aria-labelledby]="'tool-' + item.id"
+        >
+          <div class="min-w-0">
+            <h3 [id]="'tool-' + item.id" class="text-[1.25rem]">{{ item.name }}</h3>
+            <p class="mt-1 max-w-measure font-text text-small text-ink-soft">{{ item.purpose }}</p>
+            <p class="mt-2 text-meta text-ink-soft">
+              {{ 'modelos.license' | t }}: {{ item.license }}
+              @if (item.size_bytes) {
+                · {{ 'modelos.size' | t }}:
+                {{ item.size_estimated ? ('modelos.size.about' | t: { size: bytes(item.size_bytes) }) : bytes(item.size_bytes) }}
+              }
+            </p>
+            @if (jobFor(item); as job) {
+              <div class="mt-3 grid max-w-md gap-1.5">
+                <fab-progress [value]="job.progress" [label]="item.name" [paused]="job.status === 'paused'" />
+                <span class="text-small text-ink-soft">{{ job.status === 'queued' ? ('job.status.queued' | t) : job.message }}</span>
+              </div>
+            }
+          </div>
+          <div class="flex items-start gap-4 md:flex-col md:items-end md:gap-3">
+            @if (item.installed) {
+              <fab-badge tone="ok">{{ 'modelos.installed' | t }}</fab-badge>
+            } @else if (jobFor(item)) {
+              <fab-badge tone="info">{{ 'modelos.installing' | t }}</fab-badge>
+            } @else {
+              <fab-badge tone="neutral">{{ 'modelos.missing' | t }}</fab-badge>
+              <button type="button" class="btn btn-sm" (click)="install(item)">{{ 'modelos.install' | t }}</button>
+            }
+          </div>
+        </article>
+      }
+    </fab-section>
+  </div>
+}

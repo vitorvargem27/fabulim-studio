@@ -1,0 +1,206 @@
+<fab-section headingId="checklist" [title]="'proj.review.checklist' | t" [hint]="'proj.review.checklist.hint' | t">
+  @if (checklist().length) {
+    <ul class="rule-list m-0 p-0">
+      @for (item of checklist(); track item.id) {
+        <li class="grid gap-x-6 gap-y-1 md:grid-cols-[minmax(0,1fr)_auto]">
+          <div class="min-w-0">
+            <strong class="font-display text-[1.0625rem] font-semibold">{{ item.label }}</strong>
+            <p class="text-small text-ink-soft">{{ item.detail }}</p>
+          </div>
+          <fab-badge [tone]="tone(item)">{{ 'proj.review.status.' + item.status | t }}</fab-badge>
+        </li>
+      }
+    </ul>
+    @if (reminder()) {
+      <p class="banner mt-5" role="note">{{ reminder() }}</p>
+    }
+  } @else {
+    <p class="font-text text-ink-soft">{{ 'proj.review.loading' | t }}</p>
+  }
+</fab-section>
+
+<fab-section headingId="arquivos" [title]="'proj.review.files' | t" [hint]="'proj.review.files.hint' | t">
+  @if (final(); as video) {
+    <div class="grid gap-4">
+      <video class="w-full max-w-3xl border-2 border-ink bg-anil" [class.max-w-sm]="portrait()" [src]="video.url" [attr.poster]="video.thumb_url" controls playsinline></video>
+      <p class="text-small text-ink-soft">{{ video.width }}×{{ video.height }} · {{ duration(video.duration_s) }} · {{ bytes(video.size_bytes) }}</p>
+      <div class="flex flex-wrap gap-3">
+        <a class="btn btn-primary" [href]="download(video, slug() + '.mp4')" download>{{ 'proj.review.download.video' | t }}</a>
+        @if (subtitles(); as srt) {
+          <a class="btn" [href]="download(srt, slug() + '.srt')" download>{{ 'proj.review.download.srt' | t }}</a>
+        }
+      </div>
+    </div>
+  } @else {
+    <p class="font-text text-ink-soft">{{ 'proj.review.nofinal' | t }}</p>
+  }
+</fab-section>
+
+<fab-section headingId="miniaturas" [title]="'proj.review.thumbs.title' | t" [hint]="'proj.review.thumbs.hint' | t">
+  <div class="grid gap-5">
+    @if (hasScenery()) {
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="thumb-count">{{ 'proj.review.thumbs.count' | t }}</label>
+          <select id="thumb-count" (change)="onThumbCount($event)">
+            @for (n of [1, 2, 3, 4, 5, 6]; track n) {
+              <option [value]="n" [selected]="n === thumbCount()">{{ n }}</option>
+            }
+          </select>
+        </div>
+        <fab-field [label]="'proj.review.thumbs.text' | t" [hint]="'proj.review.thumbs.text.hint' | t" [maxlength]="80" [(value)]="thumbText" />
+      </div>
+      <div>
+        <button type="button" class="btn btn-primary" (click)="generateThumbnails()" [disabled]="store.busy() || store.hasActive('projeto.miniaturas')">
+          <fab-icon name="image" [size]="18" />
+          {{ 'proj.review.thumbs.generate' | t }}
+        </button>
+      </div>
+    } @else {
+      <p class="font-text text-ink-soft">{{ 'proj.review.thumbs.needs' | t }}</p>
+    }
+    @if (thumbnails().length) {
+      <div class="tile-grid tile-grid-wide">
+        @for (media of thumbnails(); track media.id) {
+          <fab-media-tile [media]="media" [caption]="'' + (media.prompt ?? '')" [detail]="media.width + '×' + media.height">
+            <a class="btn btn-sm" [href]="download(media, slug() + '-miniatura.jpg')" download>{{ 'viewer.download' | t }}</a>
+            <button type="button" class="btn btn-sm btn-quiet btn-danger" (click)="removeThumbnail(media.id)" [attr.aria-label]="'proj.review.thumbs.remove' | t">
+              <fab-icon name="trash" [size]="16" />
+            </button>
+          </fab-media-tile>
+        }
+      </div>
+    }
+  </div>
+</fab-section>
+
+<fab-section headingId="textos" [title]="'proj.review.meta.title' | t" [hint]="'proj.review.meta.hint' | t">
+  <div class="grid gap-5">
+    @if (hasScenes()) {
+      <div class="flex flex-wrap items-center gap-3">
+        <button type="button" class="btn btn-primary" (click)="suggest('ia')" [disabled]="store.busy() || store.hasActive('projeto.metadados')">
+          <fab-icon name="sparkles" [size]="18" />
+          {{ 'proj.review.meta.suggest.ai' | t }}
+        </button>
+        <button type="button" class="btn" (click)="suggest('simples')" [disabled]="store.busy() || store.hasActive('projeto.metadados')">
+          {{ 'proj.review.meta.suggest.simple' | t }}
+        </button>
+        @if (metadata(); as m) {
+          @if (m.source) {
+            <span class="text-small text-ink-soft">{{ 'proj.review.meta.source' | t: { source: ('proj.review.meta.source.' + m.source | t) } }}</span>
+          }
+        }
+      </div>
+    } @else {
+      <p class="font-text text-ink-soft">{{ 'proj.review.meta.needs' | t }}</p>
+    }
+
+    @if (metadata()) {
+      <div class="grid gap-6 xl:grid-cols-2">
+        @for (language of languages; track language) {
+          <fieldset class="m-0 grid min-w-0 content-start gap-4 border-2 border-rule-soft p-4">
+            <legend class="px-1 font-display text-[1.125rem] font-semibold">{{ 'proj.review.meta.lang.' + language | t }}</legend>
+            <fab-field
+              [label]="'proj.review.meta.title.label' | t"
+              [hint]="'proj.review.meta.chars' | t: { n: draft()[language].title.length, max: titleLimit }"
+              [maxlength]="titleLimit"
+              [value]="draft()[language].title"
+              (valueChange)="patch(language, 'title', $event)"
+            />
+            <fab-field
+              [label]="'proj.review.meta.desc' | t"
+              [hint]="'proj.review.meta.chars' | t: { n: draft()[language].description.length, max: descriptionLimit }"
+              [multiline]="true"
+              [rows]="7"
+              [maxlength]="descriptionLimit"
+              [value]="draft()[language].description"
+              (valueChange)="patch(language, 'description', $event)"
+            />
+            <fab-field
+              [label]="'proj.review.meta.tags' | t"
+              [hint]="'proj.review.meta.tags.count' | t: { n: tagCount(language), max: tagLimit }"
+              [multiline]="true"
+              [rows]="2"
+              [value]="draft()[language].tags"
+              (valueChange)="patch(language, 'tags', $event)"
+            />
+            <div class="flex flex-wrap gap-2">
+              <button type="button" class="btn btn-sm" (click)="copy(draft()[language].title)">{{ 'proj.review.meta.copy.title' | t }}</button>
+              <button type="button" class="btn btn-sm" (click)="copy(draft()[language].description)">{{ 'proj.review.meta.copy.desc' | t }}</button>
+              <button type="button" class="btn btn-sm" (click)="copy(draft()[language].tags)">{{ 'proj.review.meta.copy.tags' | t }}</button>
+            </div>
+          </fieldset>
+        }
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <button type="button" class="btn btn-primary" (click)="saveMetadata()" [disabled]="store.busy() || !dirty()">
+          <fab-icon name="check" [size]="18" />
+          {{ 'proj.review.meta.save' | t }}
+        </button>
+        @if (dirty()) {
+          <span class="text-small text-ink-soft">{{ 'proj.review.meta.unsaved' | t }}</span>
+        }
+      </div>
+    } @else if (hasScenes()) {
+      <p class="font-text text-ink-soft">{{ 'proj.review.meta.empty' | t }}</p>
+    }
+  </div>
+</fab-section>
+
+<fab-section headingId="versoes" [title]="'proj.review.versions.title' | t" [hint]="'proj.review.versions.hint' | t">
+  <div class="grid gap-6">
+    <div class="grid gap-3">
+      <h3>{{ 'proj.review.versions.language' | t: { language: ('proj.lang.' + otherLanguage() | t) } }}</h3>
+      <p class="max-w-measure font-text text-small text-ink-soft">{{ 'proj.review.versions.language.hint' | t }}</p>
+      <div class="flex flex-wrap gap-3">
+        <button type="button" class="btn btn-primary" (click)="createLanguageVersion('ia')" [disabled]="store.busy() || !hasScenes() || store.hasActive('projeto.versao_idioma')">
+          <fab-icon name="globe" [size]="18" />
+          {{ 'proj.review.versions.language.ai' | t }}
+        </button>
+        <button type="button" class="btn" (click)="createLanguageVersion('simples')" [disabled]="store.busy() || !hasScenes() || store.hasActive('projeto.versao_idioma')">
+          {{ 'proj.review.versions.language.copy' | t }}
+        </button>
+      </div>
+    </div>
+    <div class="grid gap-3">
+      <h3>{{ 'proj.review.versions.format' | t: { format: ('proj.format.' + otherFormat() | t) } }}</h3>
+      <p class="max-w-measure font-text text-small text-ink-soft">{{ 'proj.review.versions.format.hint' | t }}</p>
+      <div>
+        <button type="button" class="btn" (click)="createVariant()" [disabled]="store.busy() || !hasScenes()">
+          <fab-icon name="refresh" [size]="18" />
+          {{ 'proj.review.versions.format.button' | t: { format: ('proj.format.' + otherFormat() | t) } }}
+        </button>
+      </div>
+    </div>
+    @if (variants().length) {
+      <div class="grid gap-2">
+        <h3>{{ 'proj.review.versions.existing' | t }}</h3>
+        <ul class="rule-list m-0 p-0">
+          @for (v of variants(); track v.id) {
+            <li class="py-2">
+              <a [routerLink]="['/projetos', v.id]">{{ v.title }}</a>
+              <span class="text-small text-ink-soft">· {{ v.language === 'en' ? 'EN' : 'PT-BR' }} · {{ 'proj.format.' + v.format | t }} · {{ 'proj.stage.' + v.stage | t }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </div>
+</fab-section>
+
+<fab-section headingId="pacote" [title]="'proj.review.export.title' | t" [hint]="'proj.review.export.hint' | t">
+  <div class="grid gap-4">
+    <label class="inline-flex items-start gap-3 font-normal">
+      <input type="checkbox" [checked]="withRenders()" (change)="withRenders.set($any($event.target).checked)" />
+      <span>{{ 'proj.review.export.renders' | t }}</span>
+    </label>
+    <div>
+      <a class="btn" [href]="packageUrl()" download>
+        <fab-icon name="arrow-down" [size]="18" />
+        {{ 'proj.review.export.download' | t }}
+      </a>
+    </div>
+  </div>
+</fab-section>
+
+<fab-stage-approval stage="revisao" />

@@ -1,0 +1,244 @@
+@if (machine.error() && !snap()) {
+  <div class="banner banner-error" role="alert">
+    <fab-icon name="x-circle" />
+    <div>
+      <strong>{{ 'servicos.error.title' | t }}</strong>
+      <p class="text-small">{{ 'servicos.error.text' | t }}</p>
+    </div>
+  </div>
+}
+
+@if (machine.loading() && !snap()) {
+  <p class="font-text text-ink-soft" role="status">{{ 'common.loading' | t }}</p>
+}
+
+@if (snap(); as s) {
+  @if (!s.exists) {
+    <fab-empty [title]="'maquina.empty.title' | t" [text]="'maquina.empty.text' | t">
+      <button type="button" class="btn btn-primary" (click)="redo()" [disabled]="!!diagJob()">
+        <fab-icon name="refresh" [size]="16" />
+        {{ 'maquina.redo' | t }}
+      </button>
+    </fab-empty>
+    @if (diagJob(); as job) {
+      <div class="inline-job mt-5 grid gap-2">
+        <fab-progress [value]="job.progress" [label]="job.title" />
+        <p class="text-small text-ink-soft">{{ job.message }}</p>
+      </div>
+    }
+  } @else if (!s.valid) {
+    <div class="banner banner-error" role="alert">
+      <fab-icon name="x-circle" />
+      <div>
+        <strong>{{ 'maquina.invalid.title' | t }}</strong>
+        <ul class="my-2 text-small">
+          @for (error of s.errors; track error) {
+            <li>{{ error }}</li>
+          }
+        </ul>
+        <button type="button" class="btn btn-sm" (click)="redo()" [disabled]="!!diagJob()">{{ 'maquina.redo' | t }}</button>
+      </div>
+    </div>
+  } @else if (machine.profile(); as p) {
+    @if (s.changed) {
+      <div class="banner mb-8" role="status">
+        <fab-icon name="alert" />
+        <div>
+          <strong>{{ 'maquina.changed.title' | t }}</strong>
+          <p class="text-small">{{ 'maquina.changed.text' | t }}</p>
+        </div>
+      </div>
+    }
+
+    <!-- O perfil, como um selo: a letra grande e, ao lado, o porquê. -->
+    <section class="profile grid gap-x-10 gap-y-6 pb-10 md:grid-cols-[auto_minmax(0,1fr)]" aria-labelledby="perfil-titulo">
+      <div
+        class="letter grid size-28 place-items-center border-2 border-ink bg-accent font-display text-[4.75rem] font-semibold leading-none text-on-accent shadow-hard-lg md:size-36 md:text-[6.25rem]"
+        aria-hidden="true"
+      >
+        {{ p.letter }}
+      </div>
+      <div class="min-w-0">
+        <h2 id="perfil-titulo">{{ 'maquina.profile' | t: { letter: p.letter } }} · {{ p.name }}</h2>
+        <p class="mt-3 max-w-measure font-text text-lead text-ink-soft">{{ 'maquina.memory.budget' | t: { value: gb(p.ai_memory_mb) } }}</p>
+        <div class="mt-8 grid gap-x-10 gap-y-6 md:grid-cols-2">
+          <div>
+            <h3>{{ 'maquina.why' | t }}</h3>
+            <ul class="mt-3 grid gap-2 pl-5 font-text text-small">
+              @for (reason of p.reasons; track reason) {
+                <li>{{ reason }}</li>
+              }
+            </ul>
+          </div>
+          <div>
+            <h3>{{ 'maquina.accel.recommended' | t }}</h3>
+            <ol class="mt-3 grid gap-2 pl-5 font-text text-small">
+              @for (step of p.acceleration; track step) {
+                <li>{{ step }}</li>
+              }
+            </ol>
+          </div>
+        </div>
+        @if (p.warnings.length) {
+          <div class="banner mt-8">
+            <fab-icon name="alert" />
+            <ul class="m-0 grid gap-1 pl-4 text-small">
+              @for (warning of p.warnings; track warning) {
+                <li>{{ warning }}</li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+    </section>
+
+    <fab-section headingId="acoes" [title]="'maquina.diag.title' | t" [hint]="'maquina.diag.hint' | t">
+      <p class="font-text text-small text-ink-soft">
+        {{ 'maquina.diag.last' | t: { when: date(s.collected_at), mode: (s.mode === 'full' ? 'maquina.mode.full' : 'maquina.mode.light') | t } }}
+      </p>
+      <p class="mt-1 font-text text-small text-ink-soft">{{ 'maquina.diag.full' | t: { when: date(s.full_collected_at) } }}</p>
+      <div class="mt-5 flex flex-wrap gap-3">
+        <button type="button" class="btn btn-primary" (click)="redo()" [disabled]="!!diagJob()">
+          <fab-icon name="refresh" [size]="16" />
+          {{ 'maquina.redo' | t }}
+        </button>
+        <button type="button" class="btn" (click)="runBenchmark()" [disabled]="!!benchJob()">
+          <fab-icon name="bolt" [size]="16" />
+          {{ 'maquina.bench.run' | t }}
+        </button>
+      </div>
+      @if (diagJob(); as job) {
+        <div class="inline-job mt-5 grid gap-2">
+          <fab-progress [value]="job.progress" [label]="job.title" />
+          <p class="text-small text-ink-soft">{{ job.title }}: {{ job.message }}</p>
+        </div>
+      }
+      @if (benchJob(); as job) {
+        <div class="inline-job mt-5 grid gap-2">
+          <fab-progress [value]="job.progress" [label]="job.title" />
+          <p class="text-small text-ink-soft">{{ job.title }}: {{ job.message }}</p>
+        </div>
+      }
+    </fab-section>
+
+    <fab-section headingId="hw-titulo" [title]="'maquina.hardware' | t" [hint]="'maquina.hardware.hint' | t">
+      <dl class="facts">
+        @for (fact of facts(); track fact.key) {
+          <dt>{{ fact.key | t }}</dt>
+          <dd>
+            @for (line of fact.lines; track $index) {
+              <div>{{ line }}</div>
+            }
+          </dd>
+        }
+      </dl>
+    </fab-section>
+
+    <fab-section headingId="acc-titulo" [title]="'maquina.accel' | t" [hint]="'maquina.accel.hint' | t">
+      <div class="table-wrap">
+        <table class="table table-cards">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'maquina.accel.path' | t }}</th>
+              <th scope="col">{{ 'maquina.accel.state' | t }}</th>
+              <th scope="col">{{ 'maquina.accel.detail' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of accel(); track row.id) {
+              <tr>
+                <td [attr.data-label]="'maquina.accel.path' | t" class="font-semibold">{{ 'accel.' + row.id | t }}</td>
+                <td [attr.data-label]="'maquina.accel.state' | t">
+                  <fab-badge [tone]="row.available ? 'ok' : 'neutral'">{{ (row.available ? 'common.yes' : 'common.no') | t }}</fab-badge>
+                </td>
+                <td [attr.data-label]="'maquina.accel.detail' | t" class="text-small">{{ row.detail || '-' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </fab-section>
+
+    <fab-section headingId="bench-titulo" [title]="'maquina.bench' | t" [hint]="'maquina.bench.lead' | t">
+      @if (bench().length) {
+        <div class="table-wrap">
+          <table class="table table-cards">
+            <thead>
+              <tr>
+                <th scope="col">{{ 'maquina.bench.task' | t }}</th>
+                <th scope="col">{{ 'maquina.accel.state' | t }}</th>
+                <th scope="col">{{ 'maquina.bench.result' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of bench(); track row.task) {
+                <tr>
+                  <td [attr.data-label]="'maquina.bench.task' | t" class="font-semibold">{{ 'bench.task.' + row.task | t }}</td>
+                  <td [attr.data-label]="'maquina.accel.state' | t">
+                    <fab-badge [tone]="benchTone(row.status)">{{ 'bench.status.' + row.status | t }}</fab-badge>
+                  </td>
+                  <td [attr.data-label]="'maquina.bench.result' | t" class="text-small">{{ row.result || row.detail || '-' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="font-text text-ink-soft">{{ 'maquina.bench.none' | t }}</p>
+      }
+    </fab-section>
+
+    <fab-section headingId="cap-titulo" [title]="'maquina.caps' | t" [hint]="'maquina.caps.lead' | t">
+      <div class="chips mb-5" role="group" [attr.aria-label]="'maquina.caps.filter' | t">
+        @for (f of filters; track f) {
+          <button type="button" [attr.aria-pressed]="filter() === f" (click)="filter.set(f)">
+            {{ (f === 'all' ? 'maquina.caps.all' : 'cap.state.' + f) | t }} ({{ counts()[f] }})
+          </button>
+        }
+      </div>
+      <div class="table-wrap">
+        <table class="table table-cards caps">
+          <thead>
+            <tr>
+              <th scope="col">{{ 'maquina.caps.feature' | t }}</th>
+              <th scope="col">{{ 'maquina.accel.state' | t }}</th>
+              <th scope="col">{{ 'maquina.caps.how' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (cap of capabilities(); track cap.id) {
+              <tr>
+                <td [attr.data-label]="'maquina.caps.feature' | t"><strong class="font-display text-[1.0625rem] font-semibold">{{ cap.name }}</strong></td>
+                <td [attr.data-label]="'maquina.accel.state' | t">
+                  <fab-badge [tone]="tone(cap)">{{ 'cap.state.' + cap.state | t }}</fab-badge>
+                </td>
+                <td [attr.data-label]="'maquina.caps.how' | t" class="text-small">
+                  {{ cap.reason }}
+                  @if (cap.eta) {
+                    <div class="eta mt-1 font-bold">
+                      {{ cap.eta }}
+                      <span class="font-normal text-ink-soft">({{ (cap.eta_measured ? 'maquina.caps.measured' : 'maquina.caps.estimated') | t }})</span>
+                    </div>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </fab-section>
+
+    @if (s.pending?.length) {
+      <fab-section headingId="pend-titulo" [title]="'maquina.pending' | t" [hint]="'maquina.pending.hint' | t">
+        <ul class="pending rule-list">
+          @for (item of s.pending; track item.item) {
+            <li>
+              <strong>{{ item.item }}</strong>{{ ' ' }}<span class="text-ink-soft">({{ item.state }})</span>
+              <p class="mt-1 font-text text-small">{{ item.action }}</p>
+            </li>
+          }
+        </ul>
+      </fab-section>
+    }
+  }
+}

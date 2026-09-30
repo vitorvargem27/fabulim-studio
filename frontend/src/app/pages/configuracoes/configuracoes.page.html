@@ -1,0 +1,68 @@
+<fab-page-header [title]="'nav.config' | t" [subtitle]="'config.lead' | t" />
+
+<fab-section headingId="aparencia" [title]="'config.appearance' | t" [hint]="'config.appearance.hint' | t">
+  <div class="grid gap-6 sm:grid-cols-2">
+    <div class="field grid content-start gap-2">
+      <span class="label font-bold" id="lbl-tema">{{ 'config.theme' | t }}</span>
+      <fab-segmented [options]="themeOptions()" [label]="'config.theme' | t" [value]="theme.preference()" (valueChange)="setTheme($event)" />
+    </div>
+    <div class="field grid content-start gap-2">
+      <span class="label font-bold" id="lbl-idioma">{{ 'config.language' | t }}</span>
+      <fab-segmented [options]="langOptions" [label]="'config.language' | t" [value]="i18n.lang()" (valueChange)="setLang($event)" />
+    </div>
+  </div>
+</fab-section>
+
+<fab-section headingId="pastas" [title]="'config.folders' | t" [hint]="'config.folders.hint' | t">
+  <dl class="facts">
+    <dt>{{ 'config.folders.data' | t }}</dt>
+    <dd class="mono">{{ meta()?.data_dir ?? '-' }}</dd>
+    <dt>{{ 'config.folders.models' | t }}</dt>
+    <dd class="mono">{{ meta()?.models_dir ?? '-' }}</dd>
+    <dt>{{ 'config.folders.tools' | t }}</dt>
+    <dd class="mono">{{ meta()?.tools_dir ?? '-' }}</dd>
+  </dl>
+</fab-section>
+
+<div id="claude">
+  <fab-section headingId="claude-titulo" [title]="'config.claude' | t" [hint]="'config.claude.lead' | t">
+    <div class="flex flex-wrap items-center gap-3">
+      <fab-badge [tone]="connected() ? 'ok' : 'neutral'">
+        {{ (connected() ? 'topbar.claude.on' : 'topbar.claude.off') | t }}
+      </fab-badge>
+    </div>
+    @if (claude(); as c) {
+      <p class="mt-3 font-text text-small text-ink-soft">{{ c.summary }}@if (c.detail) { · {{ c.detail }} }</p>
+      @if (c.how_to_fix.length && !connected()) {
+        <ul class="mt-3 grid gap-1 pl-5 font-text text-small">
+          @for (step of c.how_to_fix; track step) {
+            <li>{{ step }}</li>
+          }
+        </ul>
+      }
+    }
+    <div class="privacy mt-6 border-l-8 border-menta bg-wash px-5 py-4">
+      <h3>{{ 'config.claude.privacy.title' | t }}</h3>
+      <ul class="mt-3 grid gap-1.5 pl-5 font-text text-small">
+        <li>{{ 'config.claude.privacy.1' | t }}</li>
+        <li>{{ 'config.claude.privacy.2' | t }}</li>
+        <li>{{ 'config.claude.privacy.3' | t }}</li>
+      </ul>
+    </div>
+    <div class="mt-6 flex flex-wrap items-center gap-4">
+      <button type="button" class="btn btn-primary" disabled aria-describedby="claude-aviso">{{ 'config.claude.connect' | t }}</button>
+      <span id="claude-aviso" class="max-w-measure font-text text-small text-ink-soft">{{ 'config.claude.soon' | t }}</span>
+    </div>
+  </fab-section>
+</div>
+
+<fab-section headingId="sobre" [title]="'config.about' | t">
+  <dl class="facts">
+    <dt>{{ 'config.about.version' | t }}</dt>
+    <dd>{{ meta()?.name ?? 'Fabulim Studio' }} {{ meta()?.version ?? '' }}</dd>
+    <dt>{{ 'config.about.address' | t }}</dt>
+    <dd class="mono">{{ meta() ? meta()!.host + ':' + meta()!.port : '-' }}</dd>
+  </dl>
+  <p class="mt-4 font-text text-small text-ink-soft">{{ 'config.about.security' | t }}</p>
+  <p class="mt-5"><a class="btn btn-sm" routerLink="/status/servicos">{{ 'nav.status' | t }}</a></p>
+</fab-section>

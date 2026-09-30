@@ -1,0 +1,102 @@
+# Fabulim Studio: o que NAO vai para o git
+
+# --- Gerados por maquina (secao 2.7 do briefing) ---
+config/hardware.json
+config/capabilities.json
+config/.hardware.fingerprint
+
+# --- Pesos, dados e saidas (grandes e/ou pessoais) ---
+models/
+data/
+*.gguf
+*.safetensors
+*.onnx
+*.ckpt
+*.pt
+*.bin
+*.fabulim
+
+# --- Segredos ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# --- Node / frontend ---
+node_modules/
+dist/
+build/
+.vite/
+coverage/
+playwright-report/
+test-results/
+
+# --- Sistema e editores ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.log
+tmp/
+temp/
+
+# Marca copiada de marca/ pelo frontend (gerada)
+frontend/public/marca/*
+!frontend/public/marca/README.md
+
+# Dados do E2E e configuracao de editor gerada pelo Angular CLI
+data/
+frontend/.vscode/
+
+# Programas baixados pelo instalador (ffmpeg, stable-diffusion.cpp...)
+tools/
+
+# --- Bancos, videos e audios gerados (dados pessoais e pesados) ---
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.mp4
+*.mov
+*.webm
+*.wav
+*.flac
+*.mp3
+
+# --- Cache e arquivos locais de ferramentas ---
+.angular/
+frontend/.angular/
+*.tsbuildinfo
+npm-debug.log*
+.claude/settings.local.json
+.claude/*.local.*
+.playwright-mcp/
+
+# --- Servico do Windows e logs (gerados na maquina) ---
+data/logs/
+
+# --- Arquivos perdidos por comandos (ex.: uma saida redirecionada para "-") ---
+/-
+
+# --- Chaves e credenciais de qualquer tipo ---
+*.pfx
+*.p12
+*.token
+credentials*.json
+secrets*.json

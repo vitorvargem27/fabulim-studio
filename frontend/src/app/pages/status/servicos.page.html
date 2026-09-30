@@ -1,0 +1,103 @@
+<div class="mb-2 flex flex-wrap items-center justify-between gap-4">
+  <div class="flex flex-wrap items-center gap-4" role="status" aria-live="polite">
+    @if (status.report(); as report) {
+      <fab-badge [tone]="tone(report.overall)">{{ 'servicos.overall.' + report.overall | t }}</fab-badge>
+      <span class="text-small text-ink-soft">{{ 'servicos.updated' | t: { time: time(report.generated_at) } }}</span>
+    }
+  </div>
+  <button type="button" class="btn btn-sm" (click)="status.refresh()" [disabled]="status.loading()">
+    <fab-icon name="refresh" [size]="16" />
+    {{ 'common.refresh' | t }}
+  </button>
+</div>
+
+@if (status.error()) {
+  <div class="banner banner-error my-5" role="alert">
+    <fab-icon name="x-circle" />
+    <div>
+      <strong>{{ 'servicos.error.title' | t }}</strong>
+      <p class="text-small">{{ 'servicos.error.text' | t }}</p>
+    </div>
+  </div>
+}
+
+@if (!status.report() && status.loading()) {
+  <p class="my-6 font-text text-ink-soft" role="status">{{ 'common.loading' | t }}</p>
+}
+
+<!-- Uma linha de serviço. Usada nos dois blocos. -->
+<ng-template #linha let-service>
+  <article
+    class="svc grid gap-x-8 gap-y-3 border-t border-rule-soft py-5 first:border-t-0 first:pt-0 md:grid-cols-[minmax(0,1fr)_minmax(0,1.7fr)]"
+    [class]="'state-' + service.state"
+    [attr.aria-labelledby]="'svc-' + service.id"
+  >
+    <div>
+      <h3 [id]="'svc-' + service.id" class="text-[1.25rem]">{{ service.name }}</h3>
+      <fab-badge class="mt-2" [tone]="tone(service.state)">{{ 'state.' + service.state | t }}</fab-badge>
+    </div>
+    <div class="min-w-0">
+      <p class="summary font-semibold">{{ service.summary }}</p>
+      @if (service.detail) {
+        <p class="mt-1 font-text text-small text-ink-soft">{{ service.detail }}</p>
+      }
+      @if (service.version) {
+        <p class="mt-1 text-small text-ink-soft">{{ 'servicos.version' | t }}: <code>{{ service.version }}</code></p>
+      }
+      @if (service.how_to_fix.length) {
+        <div ngAccordionGroup class="fix mt-3 border-y border-rule-soft">
+          <h4>
+            <span
+              ngAccordionTrigger
+              [panel]="fix"
+              #gatilho="ngAccordionTrigger"
+              class="flex cursor-pointer items-center justify-between gap-3 py-2.5 font-ui text-small font-bold"
+            >
+              {{ 'servicos.fix' | t }}
+              <fab-icon [name]="gatilho.expanded() ? 'arrow-up' : 'arrow-down'" [size]="16" />
+            </span>
+          </h4>
+          <div ngAccordionPanel #fix="ngAccordionPanel">
+            <ng-template ngAccordionContent>
+              <ol class="m-0 grid gap-1.5 pb-3 pl-5 font-text text-small">
+                @for (step of service.how_to_fix; track step) {
+                  <li>{{ step }}</li>
+                }
+              </ol>
+            </ng-template>
+          </div>
+        </div>
+      }
+      @if (service.log_service) {
+        <a class="btn btn-quiet btn-sm mt-2 -ml-2" routerLink="/status/logs" [queryParams]="{ service: service.log_service }">
+          {{ 'servicos.logs' | t }}
+          <fab-icon name="chevron-right" [size]="16" />
+        </a>
+      }
+    </div>
+  </article>
+</ng-template>
+
+@if (attention().length) {
+  <fab-section headingId="atencao" [title]="'servicos.group.attention' | t" [hint]="'servicos.group.attention.hint' | t">
+    @for (service of attention(); track service.id) {
+      <ng-container [ngTemplateOutlet]="linha" [ngTemplateOutletContext]="{ $implicit: service }" />
+    }
+  </fab-section>
+}
+
+@if (working().length) {
+  <fab-section headingId="em-uso" [title]="'servicos.group.use' | t" [hint]="'servicos.group.use.hint' | t">
+    @for (service of working(); track service.id) {
+      <ng-container [ngTemplateOutlet]="linha" [ngTemplateOutletContext]="{ $implicit: service }" />
+    }
+  </fab-section>
+}
+
+@if (notActive().length) {
+  <fab-section headingId="parados" [title]="'servicos.group.idle' | t" [hint]="'servicos.group.idle.hint' | t">
+    @for (service of notActive(); track service.id) {
+      <ng-container [ngTemplateOutlet]="linha" [ngTemplateOutletContext]="{ $implicit: service }" />
+    }
+  </fab-section>
+}

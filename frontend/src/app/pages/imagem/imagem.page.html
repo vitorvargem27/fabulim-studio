@@ -1,0 +1,165 @@
+<fab-page-header [title]="'nav.imagem' | t" [subtitle]="'imagem.lead' | t" />
+
+<fab-section headingId="prompt" [title]="'imagem.prompt.title' | t" [hint]="'imagem.prompt.hint' | t">
+  <fab-prompt-box type="imagem" (parsed)="onParsed($event)" />
+</fab-section>
+
+<fab-section headingId="descricao" [title]="'imagem.form.title' | t" [hint]="'imagem.form.hint' | t">
+  <div class="grid gap-5">
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label" for="img-kind">{{ 'imagem.kind' | t }}</label>
+        <select id="img-kind" (change)="onKind($event)">
+          @for (k of kinds; track k) {
+            <option [value]="k" [selected]="k === form().kind">{{ 'imagem.kind.' + k | t }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <span class="field-label">{{ 'imagem.style' | t }}</span>
+        <fab-segmented [options]="styleOptions()" [label]="'imagem.style' | t" [value]="form().style" (valueChange)="setStyle($event)" />
+      </div>
+      <div class="field">
+        <label class="field-label" for="img-format">{{ 'imagem.format' | t }}</label>
+        <select id="img-format" (change)="onFormat($event)">
+          @for (f of formats; track f) {
+            <option [value]="f" [selected]="f === form().format">{{ 'imagem.format.' + f | t }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <fab-field
+      [label]="'imagem.description' | t"
+      [hint]="'imagem.description.hint' | t"
+      [multiline]="true"
+      [rows]="4"
+      [maxlength]="2000"
+      [required]="true"
+      [value]="form().description"
+      (valueChange)="patch('description', $event)"
+    />
+    <fab-field
+      [label]="'imagem.notes' | t"
+      [multiline]="true"
+      [rows]="2"
+      [maxlength]="1000"
+      [value]="form().notes"
+      (valueChange)="patch('notes', $event)"
+    />
+
+    <fab-character-picker [characters]="characters()" [(selected)]="selectedIds" [max]="3" [label]="'imagem.characters' | t" />
+    @if (notFound().length) {
+      <p class="banner" role="status">{{ 'imagem.notfound' | t: { names: notFound().join(', ') } }}</p>
+    }
+
+    @if (basedOn(); as base) {
+      <div class="grid max-w-[16rem] gap-2">
+        <span class="field-label">{{ 'imagem.similar.label' | t }}</span>
+        <fab-media-tile [media]="base" [caption]="caption(base)">
+          <button type="button" class="btn btn-sm btn-quiet" (click)="basedOn.set(null)">{{ 'imagem.similar.remove' | t }}</button>
+        </fab-media-tile>
+      </div>
+    }
+  </div>
+</fab-section>
+
+<fab-section headingId="gerar" [title]="'imagem.generate.title' | t" [hint]="'imagem.generate.hint' | t">
+  <div class="grid gap-5">
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label" for="img-quality">{{ 'imagem.quality' | t }}</label>
+        <select id="img-quality" (change)="onQuality($event)">
+          @for (q of qualities; track q) {
+            <option [value]="q" [selected]="q === quality()">{{ 'imagem.quality.' + q | t }}</option>
+          }
+        </select>
+        <span class="field-hint">{{ 'imagem.quality.hint' | t }}</span>
+      </div>
+      <div class="field">
+        <label class="field-label" for="img-count">{{ 'imagem.count' | t }}</label>
+        <input id="img-count" type="number" min="1" max="4" [value]="count()" (change)="onCount($event)" />
+        <span class="field-hint">{{ 'imagem.count.hint' | t }}</span>
+      </div>
+      <fab-field type="text" [label]="'imagem.seed' | t" [hint]="'imagem.seed.hint' | t" [maxlength]="10" [(value)]="seed" />
+    </div>
+
+    @if (estimate(); as e) {
+      <p class="font-text text-body">
+        {{ 'imagem.estimate' | t: { time: e.total_label, size: e.width + '×' + e.height, n: count() } }}
+      </p>
+    }
+
+    <details class="border-2 border-rule-soft bg-panel p-3">
+      <summary class="cursor-pointer font-ui font-bold">{{ 'imagem.technical' | t }}</summary>
+      <div class="mt-3 grid gap-3">
+        <p class="text-small text-ink-soft">{{ 'imagem.technical.hint' | t }}</p>
+        <fab-field
+          [label]="'imagem.technical.label' | t"
+          [multiline]="true"
+          [rows]="6"
+          [maxlength]="4000"
+          [placeholder]="'imagem.technical.placeholder' | t"
+          [value]="technical()"
+          (valueChange)="onTechnical($event)"
+        />
+        <div>
+          <button type="button" class="btn btn-sm" (click)="refreshTechnical()" [disabled]="loadingTechnical() || !form().description.trim()">
+            <fab-icon name="refresh" [size]="16" />
+            {{ 'imagem.technical.refresh' | t }}
+          </button>
+        </div>
+      </div>
+    </details>
+
+    <div class="flex flex-wrap gap-3">
+      <button type="button" class="btn btn-primary" (click)="generate()" [disabled]="!canGenerate()">
+        <fab-icon name="sparkles" [size]="18" />
+        {{ 'imagem.generate' | t }}
+      </button>
+    </div>
+
+    <fab-job-progress [jobId]="jobId()" />
+    @if (error(); as message) {
+      <p class="banner banner-error" role="alert">{{ message }}</p>
+    }
+  </div>
+</fab-section>
+
+@if (results().length) {
+  <fab-section headingId="resultados" [title]="'imagem.results.title' | t" [hint]="'imagem.results.hint' | t">
+    <div class="tile-grid tile-grid-wide">
+      @for (media of results(); track media.id) {
+        <fab-media-tile [media]="media" [caption]="caption(media)" [detail]="detail(media)">
+          <button type="button" class="btn btn-sm" (click)="similar(media)">{{ 'imagem.similar' | t }}</button>
+          <a class="btn btn-sm" [href]="download(media)" download>{{ 'viewer.download' | t }}</a>
+          <button type="button" class="btn btn-sm btn-quiet" (click)="copyPrompt(media)">{{ 'imagem.copy' | t }}</button>
+        </fab-media-tile>
+      }
+    </div>
+  </fab-section>
+}
+
+<fab-section headingId="biblioteca" [title]="('imagem.library.title' | t) + ' (' + libraryTotal() + ')'" [hint]="'imagem.library.hint' | t">
+  <div class="mb-5 max-w-sm">
+    <fab-field type="search" [label]="'imagem.search' | t" [value]="search()" (valueChange)="onSearch($event)" />
+  </div>
+  @if (library().length) {
+    <div class="tile-grid">
+      @for (media of library(); track media.id) {
+        <fab-media-tile [media]="media" [caption]="caption(media)" [detail]="detail(media)">
+          <button type="button" class="btn btn-sm" (click)="similar(media)">{{ 'imagem.similar' | t }}</button>
+          <a class="btn btn-sm btn-quiet" [href]="download(media)" download>{{ 'viewer.download' | t }}</a>
+          <button type="button" class="btn btn-sm btn-quiet btn-danger" (click)="remove(media)" [attr.aria-label]="'imagem.remove' | t">
+            <fab-icon name="trash" [size]="16" />
+          </button>
+        </fab-media-tile>
+      }
+    </div>
+    @if (hasMore()) {
+      <p class="mt-6"><button type="button" class="btn" (click)="loadLibrary(false)">{{ 'imagem.more' | t }}</button></p>
+    }
+  } @else {
+    <fab-empty [title]="'imagem.empty.title' | t" [text]="'imagem.empty.text' | t" />
+  }
+</fab-section>

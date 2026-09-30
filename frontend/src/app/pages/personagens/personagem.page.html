@@ -1,0 +1,246 @@
+@if (missing()) {
+  <fab-page-header [title]="'personagens.missing.title' | t" />
+  <fab-empty [title]="'personagens.missing.title' | t" [text]="'personagens.missing.text' | t">
+    <a class="btn btn-primary" routerLink="/personagens">{{ 'personagens.back' | t }}</a>
+  </fab-empty>
+} @else if (character(); as c) {
+  <fab-page-header [title]="c.name" [subtitle]="'personagens.detail.lead' | t">
+    <a class="btn btn-sm" routerLink="/personagens">{{ 'personagens.back' | t }}</a>
+    <button type="button" class="btn btn-sm btn-danger" (click)="remove()" [disabled]="busy()">
+      <fab-icon name="trash" [size]="16" />
+      {{ 'personagens.remove' | t }}
+    </button>
+  </fab-page-header>
+
+  <div class="mb-8 flex flex-wrap items-center gap-x-6 gap-y-2">
+    <span class="font-mono text-body font-bold">{{ c.style }}</span>
+    <fab-badge [tone]="status() === 'ready' ? 'ok' : status() === 'cutout' ? 'warning' : 'neutral'">{{ 'personagens.status.' + status() | t }}</fab-badge>
+    <span class="text-small text-ink-soft">{{ 'personagens.version' | t: { n: c.version } }}</span>
+    @for (r of related(); track r.id) {
+      <a [routerLink]="['/personagens', r.id]">{{ 'personagens.related' | t: { name: r.name, style: r.style } }}</a>
+    }
+  </div>
+
+  @if (error(); as message) {
+    <p class="banner banner-error mb-6" role="alert">{{ message }}</p>
+  }
+  @if (activeJobs().length) {
+    <div class="mb-8 grid gap-3" aria-live="polite">
+      @for (job of activeJobs(); track job.id) {
+        <fab-job-progress [jobId]="job.id" />
+      }
+    </div>
+  }
+
+  <!-- 1. variações e escolha da imagem principal -->
+  <fab-section headingId="variacoes" [title]="'personagens.var.title' | t" [hint]="'personagens.var.hint' | t">
+    <div class="grid gap-5">
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="var-count">{{ 'personagens.var.count' | t }}</label>
+          <select id="var-count" (change)="onCount($event)">
+            @for (n of [1, 2, 3, 4]; track n) {
+              <option [value]="n" [selected]="n === varCount()">{{ n }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label" for="var-quality">{{ 'personagens.quality' | t }}</label>
+          <select id="var-quality" (change)="onVarQuality($event)">
+            @for (q of qualities; track q) {
+              <option [value]="q" [selected]="q === varQuality()">{{ 'personagens.quality.' + q | t }}</option>
+            }
+          </select>
+        </div>
+        <fab-field type="text" [label]="'imagem.seed' | t" [hint]="'imagem.seed.hint' | t" [maxlength]="10" [(value)]="varSeed" />
+      </div>
+      @if (estimates()['variations']; as e) {
+        <p class="font-text text-body">{{ 'personagens.var.estimate' | t: { time: e.total_label, n: varCount(), size: e.width + '×' + e.height } }}</p>
+      }
+      <div>
+        <button type="button" class="btn btn-primary" (click)="generateVariations()" [disabled]="busy() || hasActive('personagem.variacoes')">
+          <fab-icon name="sparkles" [size]="18" />
+          {{ 'personagens.var.generate' | t: { n: varCount() } }}
+        </button>
+      </div>
+
+      @if (images().length) {
+        <div class="tile-grid tile-grid-wide">
+          @for (media of images(); track media.id) {
+            <fab-media-tile [media]="media" [selected]="isMain(media)" [caption]="isMain(media) ? ('personagens.main' | t) : ''" [detail]="media.seed !== null ? ('viewer.seed' | t) + ' ' + media.seed : ''">
+              @if (isMain(media)) {
+                <button type="button" class="btn btn-sm" disabled>{{ 'personagens.chosen.label' | t }}</button>
+              } @else {
+                <button type="button" class="btn btn-sm btn-primary" (click)="choose(media)" [disabled]="busy()">{{ 'personagens.choose' | t }}</button>
+              }
+            </fab-media-tile>
+          }
+        </div>
+        <p class="text-small text-ink-soft">{{ 'personagens.var.after' | t }}</p>
+      } @else {
+        <fab-empty [title]="'personagens.var.empty.title' | t" [text]="'personagens.var.empty.text' | t" />
+      }
+    </div>
+  </fab-section>
+
+  <!-- 2. folha de referência (poses e expressões em PNG transparente) -->
+  <fab-section headingId="folha" [title]="'personagens.sheet.title' | t" [hint]="'personagens.sheet.hint' | t">
+    @if (!c.main_image_id) {
+      <p class="font-text text-ink-soft">{{ 'personagens.sheet.needs' | t }}</p>
+    } @else {
+      <div class="grid gap-5">
+        @if (!c.has_cutout) {
+          <p class="banner" role="status">
+            {{ 'personagens.cutout.pending' | t }}
+            <button type="button" class="btn btn-sm" (click)="retryCutout()" [disabled]="busy() || hasActive('personagem.recortar')">{{ 'personagens.cutout.retry' | t }}</button>
+          </p>
+        }
+        <div class="tile-grid">
+          @for (item of sheetSlots(); track item.slot) {
+            <div class="grid content-start gap-2 border-2 border-rule-soft bg-panel p-2">
+              <strong class="font-display text-[1rem] font-semibold">{{ 'personagens.slot.' + item.slot | t }}</strong>
+              @if (item.cutout; as cutout) {
+                <fab-media-tile [media]="cutout" [transparent]="true" />
+                <div class="field">
+                  <label class="field-label" [attr.for]="'facing-' + item.slot">{{ 'personagens.facing' | t }}</label>
+                  <select [id]="'facing-' + item.slot" (change)="onFacing(cutout, $event)">
+                    @for (f of facings; track f) {
+                      <option [value]="f" [selected]="f === facingOf(cutout)">{{ 'personagens.facing.' + f | t }}</option>
+                    }
+                  </select>
+                </div>
+              } @else if (item.image) {
+                <fab-media-tile [media]="item.image" [detail]="'personagens.slot.nocutout' | t" />
+              } @else {
+                <div class="grid aspect-square place-items-center bg-wash p-3 text-center text-small text-ink-soft">{{ 'personagens.slot.empty' | t }}</div>
+              }
+            </div>
+          }
+        </div>
+
+        <fieldset class="m-0 min-w-0 border-0 p-0">
+          <legend class="field-label mb-2 p-0">{{ 'personagens.sheet.pick' | t }}</legend>
+          <div class="chips">
+            @for (slot of slotChoices; track slot) {
+              <button type="button" [attr.aria-pressed]="slots().includes(slot)" (click)="toggleSlot(slot)">
+                {{ 'personagens.slot.' + slot | t }}
+                @if (slotDone(slot)) {
+                  <span aria-hidden="true">✓</span>
+                }
+              </button>
+            }
+          </div>
+        </fieldset>
+        <div class="field-row">
+          <div class="field">
+            <label class="field-label" for="sheet-quality">{{ 'personagens.quality' | t }}</label>
+            <select id="sheet-quality" (change)="onSheetQuality($event)">
+              @for (q of qualities; track q) {
+                <option [value]="q" [selected]="q === sheetQuality()">{{ 'personagens.quality.' + q | t }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        @if (estimates()['sheet']; as e) {
+          <p class="font-text text-body">{{ 'personagens.sheet.estimate' | t: { time: e.total_label, n: slots().length } }}</p>
+        }
+        <div>
+          <button type="button" class="btn btn-primary" (click)="generateSheet()" [disabled]="busy() || !slots().length || hasActive('personagem.folha')">
+            <fab-icon name="sparkles" [size]="18" />
+            {{ 'personagens.sheet.generate' | t }}
+          </button>
+        </div>
+      </div>
+    }
+  </fab-section>
+
+  <!-- 3. ficha -->
+  <fab-section headingId="ficha" [title]="'personagens.form.title' | t" [hint]="'personagens.form.hint' | t">
+    @if (form(); as f) {
+      <div class="grid gap-5">
+        <fab-character-form [form]="f" (formChange)="form.set($event)" [styleLocked]="true" />
+        <div class="flex flex-wrap items-center gap-3">
+          <button type="button" class="btn btn-primary" (click)="saveForm()" [disabled]="busy() || !formDirty()">
+            <fab-icon name="check" [size]="18" />
+            {{ 'personagens.form.save' | t }}
+          </button>
+          <span class="text-small text-ink-soft">{{ 'personagens.form.save.hint' | t }}</span>
+        </div>
+        <details class="border-2 border-rule-soft bg-panel p-3">
+          <summary class="cursor-pointer font-ui font-bold">{{ 'personagens.technical' | t }}</summary>
+          <div class="mt-3 grid gap-3">
+            <p class="text-small text-ink-soft">{{ 'personagens.technical.hint' | t }}</p>
+            <fab-field [label]="'imagem.technical.label' | t" [multiline]="true" [rows]="6" [maxlength]="4000" [(value)]="technical" />
+            <div>
+              <button type="button" class="btn btn-sm" (click)="saveTechnical()" [disabled]="busy() || !technicalDirty()">{{ 'personagens.technical.save' | t }}</button>
+            </div>
+          </div>
+        </details>
+      </div>
+    }
+  </fab-section>
+
+  <!-- 4. voz -->
+  <fab-section headingId="voz" [title]="'personagens.voice.title' | t" [hint]="'personagens.voice.hint' | t">
+    <div class="grid gap-5">
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="voice-id">{{ 'personagens.voice.pick' | t }}</label>
+          <select id="voice-id" (change)="onVoice($event)">
+            @for (language of languages(); track language) {
+              <optgroup [label]="language">
+                @for (option of voiceOptions(language); track option.id) {
+                  <option [value]="option.id" [selected]="option.id === voice().id">{{ option.nome }}</option>
+                }
+              </optgroup>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label" for="voice-speed">{{ 'personagens.voice.speed' | t }}: {{ voice().speed }}×</label>
+          <input id="voice-speed" type="range" min="0.6" max="1.4" step="0.05" [value]="voice().speed" (input)="onSpeed($event)" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="voice-pitch">{{ 'personagens.voice.pitch' | t }}: {{ voice().pitch }}×</label>
+          <input id="voice-pitch" type="range" min="0.7" max="1.4" step="0.05" [value]="voice().pitch" (input)="onPitch($event)" />
+        </div>
+      </div>
+      <fab-field [label]="'personagens.voice.text' | t" [maxlength]="300" [(value)]="testText" />
+      <div class="flex flex-wrap gap-3">
+        <button type="button" class="btn btn-primary" (click)="listen()" [disabled]="busy() || !testText().trim() || hasActive('personagem.voz_teste')">
+          <fab-icon name="play" [size]="18" />
+          {{ 'personagens.voice.listen' | t }}
+        </button>
+        <button type="button" class="btn" (click)="saveVoice()" [disabled]="busy() || !voiceDirty()">{{ 'personagens.voice.save' | t }}</button>
+      </div>
+      @if (detail(); as d) {
+        @if (d.voice_tests.length) {
+          <div class="grid gap-3 md:grid-cols-2">
+            @for (media of d.voice_tests.slice(0, 4); track media.id) {
+              <fab-media-tile [media]="media" [caption]="media.prompt ?? ''" />
+            }
+          </div>
+        }
+      }
+    </div>
+  </fab-section>
+
+  <!-- 5. outra versão -->
+  <fab-section headingId="versao" [title]="'personagens.convert.title' | t: { style: convertTarget() }" [hint]="'personagens.convert.hint' | t">
+    <div class="grid gap-4">
+      <p class="max-w-measure font-text">{{ 'personagens.convert.text' | t: { style: convertTarget() } }}</p>
+      @for (r of related(); track r.id) {
+        <p><a [routerLink]="['/personagens', r.id]">{{ 'personagens.related' | t: { name: r.name, style: r.style } }}</a></p>
+      }
+      <div>
+        <button type="button" class="btn" (click)="convert()" [disabled]="busy() || !c.main_image_id">
+          <fab-icon name="refresh" [size]="18" />
+          {{ 'personagens.convert.button' | t: { style: convertTarget() } }}
+        </button>
+        @if (!c.main_image_id) {
+          <span class="ml-3 text-small text-ink-soft">{{ 'personagens.convert.needs' | t }}</span>
+        }
+      </div>
+    </div>
+  </fab-section>
+}

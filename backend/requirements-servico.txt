@@ -1,0 +1,2 @@
+# Só para o serviço do Windows (scripts/servico_windows.py): mantém o servidor sempre no ar. Licença PSF.
+pywin32==312; sys_platform == "win32"

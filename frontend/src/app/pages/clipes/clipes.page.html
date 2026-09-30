@@ -1,0 +1,228 @@
+<fab-page-header [title]="'nav.clipes' | t" [subtitle]="'clipes.lead' | t" />
+
+@if (error(); as message) {
+  <p class="banner banner-error mb-8" role="alert">{{ message }}</p>
+}
+
+<!-- clipe rápido -->
+<fab-section headingId="rapido" [title]="'clipes.quick.title' | t" [hint]="'clipes.quick.hint' | t">
+  @if (ready().length) {
+    <div class="grid gap-5">
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="quick-character">{{ 'clipes.quick.character' | t }}</label>
+          <select id="quick-character" (change)="onQuickCharacter($event)">
+            <option value="" [selected]="!quickCharacter()">{{ 'clipes.quick.choose' | t }}</option>
+            @for (c of ready(); track c.id) {
+              <option [value]="c.id" [selected]="c.id === quickCharacter()">{{ c.name }} ({{ c.style }})</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label" for="quick-format">{{ 'clipes.quick.format' | t }}</label>
+          <select id="quick-format" (change)="onQuickFormat($event)">
+            <option value="9:16" [selected]="quickFormat() === '9:16'">{{ 'clipes.format.916' | t }}</option>
+            <option value="16:9" [selected]="quickFormat() === '16:9'">{{ 'clipes.format.169' | t }}</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label" for="quick-duration">{{ 'clipes.quick.duration' | t }}: {{ quickDuration() }} s</label>
+          <input id="quick-duration" type="range" min="3" max="10" step="1" [value]="quickDuration()" (input)="onQuickDuration($event)" />
+        </div>
+      </div>
+      <fab-field
+        [label]="'clipes.quick.prompt' | t"
+        [hint]="'clipes.quick.prompt.hint' | t"
+        [multiline]="true"
+        [rows]="3"
+        [maxlength]="300"
+        [required]="true"
+        [(value)]="quickPrompt"
+      />
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="quick-quality">{{ 'personagens.quality' | t }}</label>
+          <select id="quick-quality" (change)="onQuickQuality($event)">
+            <option value="rascunho" [selected]="quickQuality() === 'rascunho'">{{ 'personagens.quality.rascunho' | t }}</option>
+            <option value="padrao" [selected]="quickQuality() === 'padrao'">{{ 'personagens.quality.padrao' | t }}</option>
+          </select>
+        </div>
+        <fab-field type="text" [label]="'imagem.seed' | t" [hint]="'imagem.seed.hint' | t" [maxlength]="10" [(value)]="quickSeed" />
+      </div>
+      @if (capability(); as cap) {
+        <p class="font-text text-small text-ink-soft">{{ cap.reason }}@if (cap.eta) { · {{ cap.eta }} }</p>
+      }
+      <div>
+        <button type="button" class="btn btn-primary" (click)="quick()" [disabled]="!canQuick()">
+          <fab-icon name="film" [size]="18" />
+          {{ 'clipes.quick.generate' | t }}
+        </button>
+      </div>
+      <fab-job-progress [jobId]="quickJob()" />
+    </div>
+  } @else {
+    <fab-empty [title]="'clipes.quick.empty.title' | t" [text]="'clipes.quick.empty.text' | t">
+      <a class="btn btn-primary" routerLink="/personagens">{{ 'clipes.quick.empty.cta' | t }}</a>
+    </fab-empty>
+  }
+</fab-section>
+
+<!-- biblioteca -->
+<fab-section headingId="biblioteca" [title]="('clipes.library.title' | t) + ' (' + total() + ')'" [hint]="'clipes.library.hint' | t">
+  @if (panel(); as p) {
+    <div id="acao" class="mb-8 grid gap-4 border-2 border-ink bg-wash p-4 shadow-hard">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h3>{{ (p.kind === 'reframe' ? 'clipes.reframe.title' : 'clipes.continue.title') | t }}</h3>
+        <button type="button" class="btn btn-sm btn-quiet" (click)="closePanel()">{{ 'clipes.panel.close' | t }}</button>
+      </div>
+      <div class="max-w-[14rem]"><fab-media-tile [media]="p.clip" [caption]="roleOf(p.clip)" [detail]="detailOf(p.clip)" /></div>
+
+      @if (p.kind === 'reframe') {
+        <p class="max-w-measure font-text text-small text-ink-soft">{{ 'clipes.reframe.hint' | t }}</p>
+        <div class="field-row">
+          <div class="field">
+            <label class="field-label" for="reframe-preset">{{ 'clipes.reframe.preset' | t }}</label>
+            <select id="reframe-preset" (change)="onReframePreset($event)">
+              @for (preset of presets; track preset) {
+                <option [value]="preset" [selected]="preset === reframePreset()">{{ 'clipes.preset.' + preset | t }}</option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label" for="reframe-mode">{{ 'clipes.reframe.mode' | t }}</label>
+            <select id="reframe-mode" (change)="onReframeMode($event)">
+              <option value="fit" [selected]="reframeMode() === 'fit'">{{ 'clipes.reframe.fit' | t }}</option>
+              <option value="crop" [selected]="reframeMode() === 'crop'">{{ 'clipes.reframe.crop' | t }}</option>
+            </select>
+          </div>
+        </div>
+        <div><button type="button" class="btn btn-primary" (click)="reframe()">{{ 'clipes.reframe.generate' | t }}</button></div>
+        <fab-job-progress [jobId]="reframeJob()" />
+      } @else {
+        <p class="max-w-measure font-text text-small text-ink-soft">{{ 'clipes.continue.hint' | t }}</p>
+        <fab-field [label]="'clipes.continue.prompt' | t" [multiline]="true" [rows]="5" [maxlength]="12000" [required]="true" [(value)]="continuePrompt" />
+        <div class="field-row">
+          <fab-field [label]="'clipes.continue.title.label' | t" [maxlength]="160" [(value)]="continueTitle" />
+          <fab-field [label]="'clipes.continue.last' | t" [hint]="'clipes.continue.last.hint' | t" [maxlength]="400" [(value)]="continueLast" />
+        </div>
+        <fab-character-picker [characters]="characters()" [(selected)]="continueCharacters" [max]="4" [label]="'clipes.continue.characters' | t" />
+        <div>
+          <button type="button" class="btn btn-primary" (click)="continueVideo()" [disabled]="continueBusy() || continuePrompt().trim().length < 3">
+            <fab-icon name="chevron-right" [size]="18" />
+            {{ 'clipes.continue.create' | t }}
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <div class="mb-6 flex flex-wrap items-end gap-4">
+    <div class="w-full max-w-xs"><fab-field type="search" [label]="'clipes.search' | t" [value]="search()" (valueChange)="onSearch($event)" /></div>
+    <div class="chips" role="group" [attr.aria-label]="'clipes.filter' | t">
+      <button type="button" [attr.aria-pressed]="roleFilter() === 'todos'" (click)="setRole('todos')">{{ 'personagens.filter.all' | t }}</button>
+      @for (role of roles; track role) {
+        <button type="button" [attr.aria-pressed]="roleFilter() === role" (click)="setRole(role)">{{ 'clipes.role.' + role | t }}</button>
+      }
+    </div>
+  </div>
+
+  @if (clips().length) {
+    <div class="tile-grid tile-grid-wide">
+      @for (clip of clips(); track clip.id) {
+        <fab-media-tile [media]="clip" [selected]="isSelected(clip)" [caption]="roleOf(clip)" [detail]="detailOf(clip)">
+          <label class="inline-flex min-h-9 items-center gap-2 font-ui text-small font-bold">
+            <input type="checkbox" [checked]="isSelected(clip)" (change)="toggleSelect(clip)" />
+            {{ 'clipes.select' | t }}
+          </label>
+          <button type="button" class="btn btn-sm" (click)="openPanel('reframe', clip)">{{ 'clipes.reframe.open' | t }}</button>
+          <button type="button" class="btn btn-sm" (click)="openPanel('continue', clip)">{{ 'clipes.continue.open' | t }}</button>
+          <a class="btn btn-sm btn-quiet" [href]="download(clip)" download>{{ 'viewer.download' | t }}</a>
+          <button type="button" class="btn btn-sm btn-quiet btn-danger" (click)="remove(clip)" [attr.aria-label]="'clipes.remove' | t">
+            <fab-icon name="trash" [size]="16" />
+          </button>
+        </fab-media-tile>
+      }
+    </div>
+    @if (hasMore()) {
+      <p class="mt-6"><button type="button" class="btn" (click)="load(false)">{{ 'imagem.more' | t }}</button></p>
+    }
+  } @else if (loaded()) {
+    <fab-empty [title]="'clipes.empty.title' | t" [text]="'clipes.empty.text' | t" />
+  }
+</fab-section>
+
+<!-- unir -->
+<fab-section headingId="unir" [title]="'clipes.join.title' | t" [hint]="'clipes.join.hint' | t">
+  @if (selectedClips().length) {
+    <div class="grid gap-5">
+      <ol class="m-0 grid list-none gap-2 p-0" cdkDropList (cdkDropListDropped)="dropSelected($event)" [attr.aria-label]="'clipes.join.order' | t">
+        @for (clip of selectedClips(); track clip.id; let i = $index) {
+          <li class="grid grid-cols-[auto_2.5rem_minmax(0,1fr)_auto] items-center gap-3 border-2 border-ink bg-panel p-2" cdkDrag>
+            <span class="inline-grid h-11 w-8 cursor-grab touch-none place-items-center text-ink-soft" cdkDragHandle aria-hidden="true"><fab-icon name="grip" /></span>
+            <span class="font-mono text-body font-bold">{{ i + 1 }}</span>
+            <span class="min-w-0 text-small"><strong>{{ roleOf(clip) }}</strong> · {{ detailOf(clip) }}</span>
+            <span class="flex gap-1">
+              <button type="button" class="btn btn-icon btn-sm btn-quiet" (click)="move(i, -1)" [disabled]="i === 0" [attr.aria-label]="'clipes.join.up' | t"><fab-icon name="arrow-up" [size]="16" /></button>
+              <button type="button" class="btn btn-icon btn-sm btn-quiet" (click)="move(i, 1)" [disabled]="i === selectedClips().length - 1" [attr.aria-label]="'clipes.join.down' | t"><fab-icon name="arrow-down" [size]="16" /></button>
+              <button type="button" class="btn btn-icon btn-sm btn-quiet" (click)="toggleSelect(clip)" [attr.aria-label]="'clipes.join.remove' | t"><fab-icon name="close" [size]="16" /></button>
+            </span>
+          </li>
+        }
+      </ol>
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="join-transition">{{ 'clipes.join.transition' | t }}</label>
+          <select id="join-transition" (change)="onTransition($event)">
+            @for (t of transitions; track t) {
+              <option [value]="t" [selected]="t === joinTransition()">{{ 'clipes.transition.' + t | t }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label" for="join-size">{{ 'clipes.join.size' | t }}</label>
+          <select id="join-size" (change)="onJoinSize($event)">
+            <option value="auto" [selected]="joinSize() === 'auto'">{{ 'clipes.preset.auto' | t }}</option>
+            @for (preset of presets; track preset) {
+              <option [value]="preset" [selected]="preset === joinSize()">{{ 'clipes.preset.' + preset | t }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      <div>
+        <button type="button" class="btn btn-primary" (click)="join()" [disabled]="selectedClips().length < 2">
+          <fab-icon name="film" [size]="18" />
+          {{ 'clipes.join.button' | t: { n: selectedClips().length } }}
+        </button>
+        @if (selectedClips().length < 2) {
+          <span class="ml-3 text-small text-ink-soft">{{ 'clipes.join.min' | t }}</span>
+        }
+      </div>
+      <fab-job-progress [jobId]="joinJob()" />
+    </div>
+  } @else {
+    <p class="font-text text-ink-soft">{{ 'clipes.join.empty' | t }}</p>
+  }
+</fab-section>
+
+<!-- enviar vídeo -->
+<fab-section headingId="enviar" [title]="'clipes.upload.title' | t" [hint]="'clipes.upload.hint' | t">
+  <div class="grid max-w-xl gap-4">
+    <div class="field">
+      <label class="field-label" for="clip-file">{{ 'clipes.upload.file' | t }}</label>
+      <input id="clip-file" type="file" accept="video/mp4,video/quicktime,video/webm" (change)="onFile($event)" [disabled]="uploading()" />
+    </div>
+    <label class="flex items-start gap-3 font-normal">
+      <input type="checkbox" [checked]="uploadRights()" (change)="onRights($event)" />
+      <span>{{ 'clipes.upload.rights' | t }}</span>
+    </label>
+    @if (uploading()) {
+      <fab-progress [value]="uploadProgress()" [label]="'clipes.upload.sending' | t" />
+    }
+    <div>
+      <button type="button" class="btn btn-primary" (click)="upload()" [disabled]="uploading() || !uploadFile() || !uploadRights()">
+        <fab-icon name="arrow-up" [size]="18" />
+        {{ 'clipes.upload.send' | t }}
+      </button>
+    </div>
+  </div>
+</fab-section>

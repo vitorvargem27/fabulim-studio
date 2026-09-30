@@ -1,0 +1,17 @@
+#!/bin/sh
+# Pre-commit do Fabulim Studio: lint, tipos e testes rápidos (sem build e sem ponta a ponta), em ~3 minutos.
+# Para no primeiro problema (-x), então erro de lint aparece em segundos.
+# Ativar (uma vez, só neste repositório):  git config core.hooksPath scripts/hooks
+# Pular numa emergência (não recomendado):  git commit --no-verify
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+if [ -x .venv/Scripts/python.exe ]; then
+  PY=.venv/Scripts/python.exe
+elif [ -x .venv/bin/python ]; then
+  PY=.venv/bin/python
+else
+  PY=python3
+fi
+
+echo "pre-commit: rodando 'testar --rapido -x' (lint, tipos e testes)..."
+exec "$PY" scripts/testar.py --rapido -x

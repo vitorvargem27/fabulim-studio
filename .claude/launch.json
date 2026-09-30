@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "fabulim",
+      "runtimeExecutable": "C:\\video_create_ai\\.venv\\Scripts\\python.exe",
+      "runtimeArgs": ["scripts/servidor.py"],
+      "port": 8765
+    },
+    {
+      "name": "fabulim-frontend-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "frontend", "start"],
+      "port": 4200
+    }
+  ]
+}

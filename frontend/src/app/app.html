@@ -1,0 +1,110 @@
+<a class="skip-link" href="#conteudo" (click)="focusMain($event)">{{ 'app.skip' | t }}</a>
+
+<div class="shell min-h-dvh lg:grid lg:grid-cols-[4.75rem_minmax(0,1fr)] xl:grid-cols-[15rem_minmax(0,1fr)]">
+  <div
+    id="menu-lateral"
+    class="sidebar flex flex-col bg-rail text-on-rail lg:sticky lg:top-0 lg:h-dvh lg:self-start lg:overflow-y-auto max-lg:invisible max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-50 max-lg:w-[min(19rem,86vw)] max-lg:-translate-x-full max-lg:overflow-y-auto max-lg:border-r-2 max-lg:border-ink max-lg:shadow-hard-lg max-lg:transition-transform max-lg:data-[open=true]:visible max-lg:data-[open=true]:translate-x-0"
+    [attr.data-open]="navOpen()"
+    [cdkTrapFocus]="navOpen()"
+    [cdkTrapFocusAutoCapture]="navOpen()"
+  >
+    <div class="brand flex items-center justify-between gap-2 border-b border-rail-rule px-5 py-5 lg:max-xl:justify-center lg:max-xl:px-0">
+      <a routerLink="/criar" class="brand-link inline-flex" [attr.aria-label]="'nav.home' | t">
+        <span class="logo-full block lg:max-xl:hidden"><fab-logo /></span>
+        <span class="logo-icon hidden lg:max-xl:block"><fab-logo mode="icon" /></span>
+      </a>
+      <button
+        type="button"
+        class="close-nav grid size-11 place-items-center border-2 border-on-rail text-on-rail hover:bg-on-rail hover:text-rail lg:hidden"
+        (click)="closeNav()"
+        [attr.aria-label]="'app.menu.close' | t"
+      >
+        <fab-icon name="close" />
+      </button>
+    </div>
+
+    <nav [attr.aria-label]="'nav.label' | t" class="flex-1 py-1">
+      <ul class="m-0 list-none p-0">
+        @for (item of navItems; track item.path) {
+          <li class="border-b border-rail-rule">
+            <a
+              [routerLink]="item.path"
+              routerLinkActive="active bg-rail-accent text-on-accent"
+              ariaCurrentWhenActive="page"
+              [attr.title]="item.key | t"
+              class="group relative flex min-h-12 items-center gap-3 px-5 py-2.5 font-display text-[1.125rem] font-medium no-underline hover:bg-on-rail/10 lg:max-xl:justify-center lg:max-xl:px-0"
+            >
+              <span class="w-7 shrink-0 font-mono text-[0.8125rem] font-bold tabular-nums text-rail-accent group-[.active]:text-on-accent" aria-hidden="true">{{ item.index }}</span>
+              <span class="label lg:max-xl:sr-only">{{ item.key | t }}</span>
+              @if (item.path === '/fila' && jobs.activeCount() > 0) {
+                <span
+                  class="count ml-auto min-w-6 border-2 border-on-rail bg-rail-accent px-1.5 text-center font-ui text-meta font-extrabold leading-5 text-on-accent lg:max-xl:absolute lg:max-xl:right-1 lg:max-xl:top-1 lg:max-xl:ml-0 lg:max-xl:min-w-5 lg:max-xl:px-1 lg:max-xl:text-[0.7rem] lg:max-xl:leading-4"
+                  [attr.aria-label]="'nav.fila.count' | t: { n: jobs.activeCount() }"
+                  >{{ jobs.activeCount() }}</span
+                >
+              }
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <div class="side-foot border-t border-rail-rule px-5 py-4 text-meta text-on-rail-soft lg:max-xl:sr-only">
+      @if (meta(); as m) {
+        {{ 'app.version' | t: { version: m.version } }}
+      }
+    </div>
+  </div>
+
+  @if (navOpen()) {
+    <div class="backdrop fixed inset-0 z-40 bg-anil/60 lg:hidden" (click)="closeNav()" aria-hidden="true"></div>
+  }
+
+  <div class="main-col flex min-w-0 flex-col">
+    <header class="topbar sticky top-0 z-20 flex items-stretch border-b-2 border-ink bg-paper/95 backdrop-blur-sm">
+      <button
+        type="button"
+        class="util menu-btn border-l-0 border-r border-rail-rule lg:hidden"
+        (click)="toggleNav()"
+        aria-controls="menu-lateral"
+        [attr.aria-expanded]="navOpen()"
+        [attr.aria-label]="'app.menu.open' | t"
+      >
+        <fab-icon name="menu" />
+      </button>
+      <span class="grow"></span>
+      <fab-claude-indicator />
+      @if (profileLetter(); as letter) {
+        <a
+          class="util profile-chip"
+          routerLink="/status/maquina"
+          [attr.title]="'topbar.profile.title' | t"
+          [attr.aria-label]="('topbar.profile' | t: { letter }) + ': ' + ('topbar.profile.title' | t)"
+        >
+          <span class="prof-word max-sm:sr-only">{{ 'topbar.profile.word' | t }}</span>
+          <strong class="prof-letter font-display text-[1.3rem] font-semibold leading-none">{{ letter }}</strong>
+        </a>
+      }
+      <button
+        type="button"
+        class="util"
+        (click)="theme.toggle()"
+        [attr.aria-label]="(theme.effective() === 'dark' ? 'theme.to.light' : 'theme.to.dark') | t"
+        [attr.title]="(theme.effective() === 'dark' ? 'theme.to.light' : 'theme.to.dark') | t"
+      >
+        <fab-icon [name]="theme.effective() === 'dark' ? 'sun' : 'moon'" />
+      </button>
+      <button type="button" class="util lang-btn" (click)="toggleLang()" [attr.aria-label]="'lang.switch' | t" [attr.title]="'lang.switch' | t">
+        <fab-icon name="globe" [size]="18" />
+        <span class="max-sm:sr-only">{{ i18n.lang() === 'pt-BR' ? 'PT' : 'EN' }}</span>
+      </button>
+    </header>
+
+    <main id="conteudo" tabindex="-1" class="mx-auto w-full max-w-page px-gutter pb-20 pt-8 outline-none">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+
+<fab-viewer-host />
+<fab-toast-host />

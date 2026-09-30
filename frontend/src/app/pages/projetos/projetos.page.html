@@ -1,0 +1,59 @@
+<fab-page-header [title]="'nav.projetos' | t" [subtitle]="'proj.lead' | t">
+  <a class="btn btn-primary" routerLink="/criar" fragment="comecar">
+    <fab-icon name="sparkles" [size]="18" />
+    {{ 'proj.new' | t }}
+  </a>
+</fab-page-header>
+
+@if (error(); as message) {
+  <p class="banner banner-error mb-8" role="alert">{{ message }}</p>
+}
+
+<fab-section headingId="lista" [title]="('proj.list.title' | t) + ' (' + items().length + ')'" [hint]="'proj.list.hint' | t">
+  @if (items().length) {
+    <ul class="tile-grid tile-grid-wide m-0 list-none p-0">
+      @for (p of items(); track p.id) {
+        <li class="grid content-start gap-2 border-2 border-ink bg-panel p-2">
+          <a [routerLink]="['/projetos', p.id]" class="grid gap-2 text-ink no-underline">
+            <span class="checker grid aspect-video w-full place-items-center overflow-hidden">
+              @if (p.thumb_url) {
+                <img [src]="p.thumb_url" [alt]="p.title" loading="lazy" class="size-full object-cover" />
+              } @else {
+                <fab-icon name="film" [size]="40" />
+              }
+            </span>
+            <strong class="font-display text-[1.25rem] font-semibold leading-tight">{{ p.title }}</strong>
+          </a>
+          <p class="flex flex-wrap items-center gap-x-4 gap-y-1 text-small">
+            <span class="font-mono font-bold">{{ p.style }}</span>
+            <span>{{ 'proj.format.' + p.format | t }}</span>
+            <span>{{ p.language === 'en' ? 'EN' : 'PT-BR' }}</span>
+            <span>{{ 'proj.scenes' | t: { n: p.scene_count } }}</span>
+          </p>
+          <p class="flex flex-wrap items-center justify-between gap-2 text-small">
+            <fab-badge [tone]="p.has_final ? 'ok' : 'info'">{{ p.has_final ? ('proj.ready' | t) : stageName(p.stage) }}</fab-badge>
+            <span class="text-ink-soft">{{ 'proj.progress' | t: { done: approved(p), total: total() } }}</span>
+          </p>
+          @if (p.characters.length) {
+            <p class="text-small text-ink-soft">{{ p.characters.join(', ') }}</p>
+          }
+          <p class="text-meta text-ink-soft">{{ 'proj.updated' | t: { date: date(p.updated_at) } }}</p>
+          <div class="flex flex-wrap gap-2">
+            <a class="btn btn-sm btn-primary" [routerLink]="['/projetos', p.id]">{{ 'proj.open' | t }}</a>
+            <button type="button" class="btn btn-sm btn-quiet btn-danger" (click)="remove(p)" [attr.aria-label]="('proj.remove' | t) + ': ' + p.title">
+              <fab-icon name="trash" [size]="16" />
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+  } @else if (loaded()) {
+    <fab-empty [title]="'proj.empty.title' | t" [text]="'proj.empty.text' | t">
+      <a class="btn btn-primary" routerLink="/criar" fragment="comecar">{{ 'proj.new' | t }}</a>
+    </fab-empty>
+  }
+</fab-section>
+
+<fab-section headingId="importar" [title]="'proj.import.title' | t" [hint]="'proj.import.hint' | t">
+  <fab-package-import (imported)="load()" />
+</fab-section>

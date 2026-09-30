@@ -1,0 +1,106 @@
+/* Base: tipografia (Fredoka nos títulos, Fraunces no texto explicativo, Nunito Sans nos controles), foco e acessibilidade. */
+
+@layer base {
+  html {
+    font-size: 100%; /* respeita o tamanho de texto do usuário */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    text-rendering: optimizeLegibility;
+    overflow-wrap: anywhere;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: var(--tracking-tight);
+    margin: 0;
+  }
+  h1 {
+    font-size: var(--text-h1);
+    line-height: var(--text-h1--line-height);
+  }
+  h2 {
+    font-size: var(--text-h2);
+    line-height: var(--text-h2--line-height);
+  }
+  h3 {
+    font-size: var(--text-h3);
+    line-height: var(--text-h3--line-height);
+  }
+
+  p {
+    margin: 0;
+  }
+
+  /* links de texto (sem classe): sublinhado grosso de girassol; ao passar o mouse, viram marca-texto */
+  a:not([class]) {
+    color: inherit;
+    text-decoration-line: underline;
+    text-decoration-thickness: 2px;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 0.22em;
+  }
+  a:not([class]):hover {
+    background: var(--accent);
+    color: var(--on-accent);
+    text-decoration-color: transparent;
+  }
+
+  ul,
+  ol {
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+
+  code,
+  kbd,
+  .mono {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+  }
+  code {
+    background: var(--wash);
+    border-radius: 2px;
+    padding: 0.1em 0.35em;
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  /* foco sempre visível, sobre qualquer fundo (o contorno acompanha a forma do elemento) */
+  :focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  /* movimento só quando responde a uma ação do usuário e nunca para quem pediu menos movimento */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

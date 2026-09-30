@@ -1,0 +1,72 @@
+/*
+ * Tokens do Fabulim Studio: "papel e tinta". Fonte única das cores; o teste de contraste (styles/contrast.spec.ts) lê
+ * este arquivo. Paleta da marca: Anil #2B2D6E, Girassol #FFC93C, Coral #FF7A8A, Menta #4FD1C5, Nuvem #F6F4FF.
+ * Girassol e Menta ficam só em fundos e formas (nunca como cor de texto sobre fundo claro: contraste insuficiente).
+ */
+
+:root {
+  color-scheme: light;
+
+  /* marca (uso direto só em fundos e formas) */
+  --brand-anil: #2b2d6e;
+  --brand-girassol: #ffc93c;
+  --brand-coral: #ff7a8a;
+  --brand-menta: #4fd1c5;
+  --brand-nuvem: #f6f4ff;
+
+  /* papel e tinta */
+  --paper: #f6f4ff;
+  --panel: #ffffff;
+  --wash: #ece8fa;
+  --ink: #2b2d6e;
+  --ink-soft: #4f5187;
+  --rule-soft: #c9c3ea;
+
+  /* ação principal e foco */
+  --accent: #ffc93c;
+  --accent-hover: #ffbb0d;
+  --on-accent: #2b2d6e;
+  --focus: #2b2d6e;
+
+  /* estados: texto escurecido para passar em AA; a forma e a palavra dizem o estado, não só a cor */
+  --ok-ink: #0b6b62;
+  --warn-ink: #8a5a00;
+  --bad-ink: #b3324a;
+
+  /* barra lateral (sempre escura) */
+  --rail: #2b2d6e;
+  --on-rail: #f6f4ff;
+  --on-rail-soft: #c6c4ee;
+  --rail-rule: #4b4e9c;
+  --rail-accent: #ffc93c;
+
+  --shadow: #2b2d6e;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --paper: #15163a;
+  --panel: #1e2050;
+  --wash: #262962;
+  --ink: #f6f4ff;
+  --ink-soft: #bdbbe6;
+  --rule-soft: #383c86;
+
+  --accent: #ffc93c;
+  --accent-hover: #ffd766;
+  --on-accent: #2b2d6e;
+  --focus: #ffc93c;
+
+  --ok-ink: #6ee7da;
+  --warn-ink: #ffd666;
+  --bad-ink: #ff9daa;
+
+  --rail: #0e0f2e;
+  --on-rail: #f6f4ff;
+  --on-rail-soft: #b9b7e6;
+  --rail-rule: #2e3170;
+  --rail-accent: #ffc93c;
+
+  --shadow: #07071c;
+}
